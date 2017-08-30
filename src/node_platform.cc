@@ -284,11 +284,7 @@ double NodePlatform::MonotonicallyIncreasingTime() {
 }
 
 double NodePlatform::CurrentClockTimeMillis() {
-#ifndef _WIN32
-  return v8::base::OS::TimeCurrentMillis();
-#else
-  return 0.0;
-#endif
+  return SystemClockTimeMillis();
 }
 
 TracingController* NodePlatform::GetTracingController() {
