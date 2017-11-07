@@ -115,6 +115,7 @@ class TimerWrap : public HandleWrap {
   static void OnTimeout(uv_timer_t* handle) {
     TimerWrap* wrap = static_cast<TimerWrap*>(handle->data);
     Environment* env = wrap->env();
+    v8::Locker locker(env->isolate());
     HandleScope handle_scope(env->isolate());
     Context::Scope context_scope(env->context());
     wrap->MakeCallback(kOnTimeout, 0, nullptr);

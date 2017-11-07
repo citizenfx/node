@@ -54,6 +54,7 @@ using AsyncHooks = Environment::AsyncHooks;
 
 
 Local<Object> TCPWrap::Instantiate(Environment* env, AsyncWrap* parent) {
+  v8::Locker locker(env->isolate());
   EscapableHandleScope handle_scope(env->isolate());
   AsyncHooks::InitScope init_scope(env, parent->get_async_id());
   CHECK_EQ(env->tcp_constructor_template().IsEmpty(), false);
@@ -324,6 +325,7 @@ void TCPWrap::Connect6(const FunctionCallbackInfo<Value>& args) {
 Local<Object> AddressToJS(Environment* env,
                           const sockaddr* addr,
                           Local<Object> info) {
+  v8::Locker locker(env->isolate());
   EscapableHandleScope scope(env->isolate());
   char ip[INET6_ADDRSTRLEN];
   const sockaddr_in *a4;

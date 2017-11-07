@@ -175,6 +175,7 @@ void PerformanceGCCallback(uv_async_t* handle) {
       static_cast<PerformanceEntry::Data*>(handle->data);
   Environment* env = data->env();
   Isolate* isolate = env->isolate();
+  v8::Locker locker(env->isolate());
   HandleScope scope(isolate);
   Local<Context> context = env->context();
   Context::Scope context_scope(context);

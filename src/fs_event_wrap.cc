@@ -155,6 +155,7 @@ void FSEventWrap::OnEvent(uv_fs_event_t* handle, const char* filename,
   FSEventWrap* wrap = static_cast<FSEventWrap*>(handle->data);
   Environment* env = wrap->env();
 
+  v8::Locker locker(env->isolate());
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 

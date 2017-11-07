@@ -143,6 +143,7 @@ RetainedObjectInfo* WrapperInfo(uint16_t class_id, Local<Value> wrapper) {
 static void DestroyAsyncIdsCallback(uv_timer_t* handle) {
   Environment* env = Environment::from_destroy_async_ids_timer_handle(handle);
 
+  v8::Locker locker(env->isolate());
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
   Local<Function> fn = env->async_hooks_destroy_function();

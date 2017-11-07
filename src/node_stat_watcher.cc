@@ -88,6 +88,7 @@ void StatWatcher::Callback(uv_fs_poll_t* handle,
   StatWatcher* wrap = static_cast<StatWatcher*>(handle->data);
   CHECK_EQ(wrap->watcher_, handle);
   Environment* env = wrap->env();
+  v8::Locker locker(wrap->env()->isolate());
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 

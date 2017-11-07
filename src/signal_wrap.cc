@@ -114,6 +114,7 @@ class SignalWrap : public HandleWrap {
   static void OnSignal(uv_signal_t* handle, int signum) {
     SignalWrap* wrap = ContainerOf(&SignalWrap::handle_, handle);
     Environment* env = wrap->env();
+    v8::Locker locker(wrap->env()->isolate());
     HandleScope handle_scope(env->isolate());
     Context::Scope context_scope(env->context());
 

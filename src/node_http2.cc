@@ -91,6 +91,7 @@ Http2Session::Http2Session(Environment* env,
   prep_->data = static_cast<void*>(this);
   uv_prepare_start(prep_, [](uv_prepare_t* t) {
     Http2Session* session = static_cast<Http2Session*>(t->data);
+    v8::Locker locker(session->env()->isolate());
     HandleScope scope(session->env()->isolate());
     Context::Scope context_scope(session->env()->context());
 
@@ -133,6 +134,7 @@ ssize_t Http2Session::OnCallbackPadding(size_t frameLen,
   Isolate* isolate = env()->isolate();
   Local<Context> context = env()->context();
 
+  v8::Locker locker(isolate);
   HandleScope handle_scope(isolate);
   Context::Scope context_scope(context);
 
@@ -178,6 +180,7 @@ void HttpErrorString(const FunctionCallbackInfo<Value>& args) {
 // output for an HTTP2-Settings header field.
 void PackSettings(const FunctionCallbackInfo<Value>& args) {
   Environment* env = Environment::GetCurrent(args);
+  v8::Locker locker(env->isolate());
   HandleScope scope(env->isolate());
 
   std::vector<nghttp2_settings_entry> entries;
@@ -813,6 +816,7 @@ void Http2Session::UpdateChunksSent(const FunctionCallbackInfo<Value>& args) {
   Isolate* isolate = env->isolate();
   ASSIGN_OR_RETURN_UNWRAP(&session, args.Holder());
 
+  v8::Locker locker(isolate);
   HandleScope scope(isolate);
 
   uint32_t length = session->chunks_sent_since_last_write_;
@@ -928,6 +932,7 @@ void Http2Session::OnTrailers(Nghttp2Stream* stream,
               stream->id());
   Local<Context> context = env()->context();
   Isolate* isolate = env()->isolate();
+  v8::Locker locker(isolate);
   HandleScope scope(isolate);
   Context::Scope context_scope(context);
 
@@ -956,6 +961,7 @@ void Http2Session::OnHeaders(
   Local<Context> context = env()->context();
   Isolate* isolate = env()->isolate();
   Context::Scope context_scope(context);
+  v8::Locker locker(isolate);
   HandleScope scope(isolate);
   Local<String> name_str;
   Local<String> value_str;
@@ -1010,6 +1016,7 @@ void Http2Session::OnHeaders(
 void Http2Session::OnStreamClose(int32_t id, uint32_t code) {
   Isolate* isolate = env()->isolate();
   Local<Context> context = env()->context();
+  v8::Locker locker(isolate);
   HandleScope scope(isolate);
   Context::Scope context_scope(context);
 
@@ -1025,6 +1032,7 @@ void Http2Session::OnDataChunk(
     uv_buf_t* chunk) {
   Isolate* isolate = env()->isolate();
   Local<Context> context = env()->context();
+  v8::Locker locker(isolate);
   HandleScope scope(isolate);
   Local<Object> obj = Object::New(isolate);
   obj->Set(context,
@@ -1042,6 +1050,7 @@ void Http2Session::OnDataChunk(
 void Http2Session::OnSettings(bool ack) {
   Local<Context> context = env()->context();
   Isolate* isolate = env()->isolate();
+  v8::Locker locker(isolate);
   HandleScope scope(isolate);
   Context::Scope context_scope(context);
 
@@ -1052,6 +1061,7 @@ void Http2Session::OnSettings(bool ack) {
 void Http2Session::OnFrameError(int32_t id, uint8_t type, int error_code) {
   Local<Context> context = env()->context();
   Isolate* isolate = env()->isolate();
+  v8::Locker locker(isolate);
   HandleScope scope(isolate);
   Context::Scope context_scope(context);
 
@@ -1069,6 +1079,7 @@ void Http2Session::OnPriority(int32_t stream,
                               int8_t exclusive) {
   Local<Context> context = env()->context();
   Isolate* isolate = env()->isolate();
+  v8::Locker locker(isolate);
   HandleScope scope(isolate);
   Context::Scope context_scope(context);
 
@@ -1087,6 +1098,7 @@ void Http2Session::OnGoAway(int32_t lastStreamID,
                             size_t length) {
   Local<Context> context = env()->context();
   Isolate* isolate = env()->isolate();
+  v8::Locker locker(isolate);
   HandleScope scope(isolate);
   Context::Scope context_scope(context);
 
@@ -1247,6 +1259,7 @@ void Initialize(Local<Object> target,
                 void* priv) {
   Environment* env = Environment::GetCurrent(context);
   Isolate* isolate = env->isolate();
+  v8::Locker locker(isolate);
   HandleScope scope(isolate);
 
   http2_state* state = new http2_state(isolate);

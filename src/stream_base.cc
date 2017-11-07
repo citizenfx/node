@@ -75,6 +75,7 @@ void StreamBase::AfterShutdown(ShutdownWrap* req_wrap, int status) {
   // The wrap and request objects should still be there.
   CHECK_EQ(req_wrap->persistent().IsEmpty(), false);
 
+  v8::Locker locker(env->isolate());
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 
@@ -399,6 +400,7 @@ void StreamBase::AfterWrite(WriteWrap* req_wrap, int status) {
   StreamBase* wrap = req_wrap->wrap();
   Environment* env = req_wrap->env();
 
+  v8::Locker locker(env->isolate());
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 

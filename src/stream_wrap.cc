@@ -146,6 +146,7 @@ bool LibuvStreamWrap::IsIPCPipe() {
 
 
 uint32_t LibuvStreamWrap::UpdateWriteQueueSize() {
+  v8::Locker locker(env()->isolate());
   HandleScope scope(env()->isolate());
   uint32_t write_queue_size = stream()->write_queue_size;
   object()->Set(env()->context(),
@@ -170,6 +171,7 @@ void LibuvStreamWrap::OnAlloc(uv_handle_t* handle,
                          size_t suggested_size,
                          uv_buf_t* buf) {
   LibuvStreamWrap* wrap = static_cast<LibuvStreamWrap*>(handle->data);
+  v8::Locker locker(wrap->env()->isolate());
   HandleScope scope(wrap->env()->isolate());
   Context::Scope context_scope(wrap->env()->context());
 
@@ -187,6 +189,7 @@ void LibuvStreamWrap::OnAllocImpl(size_t size, uv_buf_t* buf, void* ctx) {
 
 template <class WrapType, class UVType>
 static Local<Object> AcceptHandle(Environment* env, LibuvStreamWrap* parent) {
+  v8::Locker locker(env->isolate());
   EscapableHandleScope scope(env->isolate());
   Local<Object> wrap_obj;
   UVType* handle;
@@ -212,6 +215,7 @@ void LibuvStreamWrap::OnReadImpl(ssize_t nread,
                             void* ctx) {
   LibuvStreamWrap* wrap = static_cast<LibuvStreamWrap*>(ctx);
   Environment* env = wrap->env();
+  v8::Locker locker(wrap->env()->isolate());
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 
@@ -252,6 +256,7 @@ void LibuvStreamWrap::OnRead(uv_stream_t* handle,
                         ssize_t nread,
                         const uv_buf_t* buf) {
   LibuvStreamWrap* wrap = static_cast<LibuvStreamWrap*>(handle->data);
+  v8::Locker locker(wrap->env()->isolate());
   HandleScope scope(wrap->env()->isolate());
   Context::Scope context_scope(wrap->env()->context());
   uv_handle_type type = UV_UNKNOWN_HANDLE;
@@ -311,6 +316,7 @@ int LibuvStreamWrap::DoShutdown(ShutdownWrap* req_wrap) {
 void LibuvStreamWrap::AfterShutdown(uv_shutdown_t* req, int status) {
   ShutdownWrap* req_wrap = ShutdownWrap::from_req(req);
   CHECK_NE(req_wrap, nullptr);
+  v8::Locker locker(req_wrap->env()->isolate());
   HandleScope scope(req_wrap->env()->isolate());
   Context::Scope context_scope(req_wrap->env()->context());
   req_wrap->Done(status);
@@ -389,6 +395,7 @@ int LibuvStreamWrap::DoWrite(WriteWrap* w,
 void LibuvStreamWrap::AfterWrite(uv_write_t* req, int status) {
   WriteWrap* req_wrap = WriteWrap::from_req(req);
   CHECK_NE(req_wrap, nullptr);
+  v8::Locker locker(req_wrap->env()->isolate());
   HandleScope scope(req_wrap->env()->isolate());
   Context::Scope context_scope(req_wrap->env()->context());
   req_wrap->Done(status);
