@@ -410,7 +410,7 @@ size_t StringBytes::Write(Isolate* isolate,
       if (is_extern) {
         nbytes = base64_decode(buf, buflen, data, external_nbytes);
       } else {
-        String::Value value(str);
+        String::Value value(isolate, str);
         nbytes = base64_decode(buf, buflen, *value, value.length());
       }
       if (chars_written != nullptr) {
@@ -422,7 +422,7 @@ size_t StringBytes::Write(Isolate* isolate,
       if (is_extern) {
         nbytes = hex_decode(buf, buflen, data, external_nbytes);
       } else {
-        String::Value value(str);
+        String::Value value(isolate, str);
         nbytes = hex_decode(buf, buflen, *value, value.length());
       }
       if (chars_written != nullptr) {
@@ -532,7 +532,7 @@ size_t StringBytes::Size(Isolate* isolate,
       break;
 
     case BASE64: {
-      String::Value value(str);
+      String::Value value(isolate, str);
       data_size = base64_decoded_size(*value, value.length());
       break;
     }

@@ -1606,9 +1606,11 @@ void AppendExceptionLine(Environment* env,
   ScriptOrigin origin = message->GetScriptOrigin();
   node::Utf8Value filename(env->isolate(), message->GetScriptResourceName());
   const char* filename_string = *filename;
-  int linenum = message->GetLineNumber();
+  int linenum = message->GetLineNumber(env->context()).FromJust();
   // Print line of source code.
-  node::Utf8Value sourceline(env->isolate(), message->GetSourceLine());
+  MaybeLocal<String> source_line_maybe = message->GetSourceLine(env->context());
+  node::Utf8Value sourceline(env->isolate(),
+                             source_line_maybe.ToLocalChecked());
   const char* sourceline_string = *sourceline;
 
   // Because of how node modules work, all scripts are wrapped with a
@@ -1752,7 +1754,7 @@ static void ReportException(Environment* env,
         name.IsEmpty() ||
         name->IsUndefined()) {
       // Not an error object. Just print as-is.
-      String::Utf8Value message(er);
+      String::Utf8Value message(env->isolate(), er);
 
       PrintErrorString("%s\n", *message ? *message :
                                           "<toString() threw exception>");
@@ -1800,13 +1802,13 @@ static Local<Value> ExecuteString(Environment* env,
     exit(3);
   }
 
-  Local<Value> result = script.ToLocalChecked()->Run();
+  MaybeLocal<Value> result = script.ToLocalChecked()->Run(env->context());
   if (result.IsEmpty()) {
     ReportException(env, try_catch);
     exit(4);
   }
 
-  return scope.Escape(result);
+  return scope.Escape(result.ToLocalChecked());
 }
 
 
