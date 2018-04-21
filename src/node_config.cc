@@ -1,8 +1,6 @@
 #include "node.h"
 #include "node_i18n.h"
-#include "env.h"
 #include "env-inl.h"
-#include "util.h"
 #include "util-inl.h"
 #include "node_debug_options.h"
 
@@ -131,4 +129,4 @@ static void InitConfig(Local<Object> target,
 
 }  // namespace node
 
-NODE_MODULE_CONTEXT_AWARE_BUILTIN(config, node::InitConfig)
+NODE_BUILTIN_MODULE_CONTEXT_AWARE(config, node::InitConfig)

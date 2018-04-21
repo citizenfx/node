@@ -38,6 +38,10 @@ onboarding session.
       * Branches in the nodejs/node repository are only for release lines
     * [See "Updating Node.js from Upstream"](./onboarding-extras.md#updating-nodejs-from-upstream)
     * Make a new branch for each PR you submit.
+    * Membership: Consider making your membership in the Node.js GitHub organization
+      public. This makes it easier to identify Collaborators. Instructions on how to
+      do that are available at
+      [Publicizing or hiding organization membership](https://help.github.com/articles/publicizing-or-hiding-organization-membership/).
 
   * Notifications:
     * Use [https://github.com/notifications](https://github.com/notifications) or set up email
@@ -107,7 +111,7 @@ onboarding session.
         (especially if it just has nits left).
   * Approving a change
     * Collaborators indicate that they have reviewed and approve of the
-        the changes in a pull request using Github’s approval interface
+        changes in a pull request using Github’s approval interface
     * Some people like to comment `LGTM` (“Looks Good To Me”)
     * You have the authority to approve any other collaborator’s work.
     * You cannot approve your own pull requests.
@@ -158,7 +162,7 @@ onboarding session.
   * After one or two approvals, land the PR.
     * Be sure to add the `PR-URL: <full-pr-url>` and appropriate `Reviewed-By:` metadata!
     * [`core-validate-commit`][] helps a lot with this – install and use it if you can!
-    * If you use Chrome, [`node-review`][] fetches the metadata for you
+    * [`node-core-utils`][] fetches the metadata for you.
 
 ## Final notes
 
@@ -178,6 +182,6 @@ onboarding session.
     accommodation, transportation, visa fees etc. if needed. Check out the
     [summit](https://github.com/nodejs/summit) repository for details.
 
-[Code of Conduct]: https://github.com/nodejs/TSC/blob/master/CODE_OF_CONDUCT.md
+[Code of Conduct]: https://github.com/nodejs/admin/blob/master/CODE_OF_CONDUCT.md
 [`core-validate-commit`]: https://github.com/evanlucas/core-validate-commit
-[`node-review`]: https://github.com/evanlucas/node-review
+[`node-core-utils`]: https://github.com/nodejs/node-core-utils

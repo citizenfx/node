@@ -21,15 +21,12 @@
 
 #include "tty_wrap.h"
 
-#include "env.h"
 #include "env-inl.h"
 #include "handle_wrap.h"
 #include "node_buffer.h"
 #include "node_wrap.h"
-#include "req-wrap.h"
 #include "req-wrap-inl.h"
 #include "stream_wrap.h"
-#include "util.h"
 #include "util-inl.h"
 
 namespace node {
@@ -178,4 +175,4 @@ TTYWrap::TTYWrap(Environment* env,
 
 }  // namespace node
 
-NODE_MODULE_CONTEXT_AWARE_BUILTIN(tty_wrap, node::TTYWrap::Initialize)
+NODE_BUILTIN_MODULE_CONTEXT_AWARE(tty_wrap, node::TTYWrap::Initialize)

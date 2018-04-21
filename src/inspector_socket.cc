@@ -1,5 +1,4 @@
 #include "inspector_socket.h"
-#include "util.h"
 #include "util-inl.h"
 
 #define NODE_WANT_INTERNALS 1
@@ -578,7 +577,7 @@ int inspector_accept(uv_stream_t* server, InspectorSocket* socket,
                         data_received_cb);
   }
   if (err != 0) {
-    uv_close(reinterpret_cast<uv_handle_t*>(tcp), NULL);
+    uv_close(reinterpret_cast<uv_handle_t*>(tcp), nullptr);
   }
   return err;
 }

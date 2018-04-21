@@ -1,5 +1,7 @@
 # Deprecated APIs
 
+<!--introduced_in=v7.7.0-->
+
 Node.js may deprecate APIs when either: (a) use of the API is considered to be
 unsafe, (b) an improved alternative API has been made available, or (c)
 breaking changes to the API are expected in a future major release.
@@ -41,7 +43,7 @@ The `OutgoingMessage.prototype.flush()` method is deprecated. Use
 <a id="DEP0002"></a>
 ### DEP0002: require('\_linklist')
 
-Type: Runtime
+Type: End-of-Life
 
 The `_linklist` module is deprecated. Please use a userland alternative.
 
@@ -118,7 +120,7 @@ to the `constants` property exposed by the relevant module. For instance,
 Type: End-of-life
 
 Use of the [`crypto.pbkdf2()`][] API without specifying a digest was deprecated
-in Node.js 6.0 because the method defaulted to using the non-recommendend
+in Node.js 6.0 because the method defaulted to using the non-recommended
 `'SHA1'` digest. Previously, a deprecation warning was printed. Starting in
 Node.js 8.0.0, calling `crypto.pbkdf2()` or `crypto.pbkdf2Sync()` with an
 undefined `digest` will throw a `TypeError`.
@@ -662,6 +664,25 @@ Using a property named `inspect` on an object to specify a custom inspection
 function for [`util.inspect()`][] is deprecated. Use [`util.inspect.custom`][]
 instead. For backwards compatibility with Node.js prior to version 6.4.0, both
 may be specified.
+
+<a id="DEP0085"></a>
+### DEP0085: AsyncHooks Sensitive API
+
+Type: Runtime
+
+The AsyncHooks Sensitive API was never documented and had various of minor
+issues, see https://github.com/nodejs/node/issues/15572. Use the `AsyncResource`
+API instead.
+
+
+<a id="DEP0086"></a>
+### DEP0086: Remove runInAsyncIdScope
+
+Type: Runtime
+
+`runInAsyncIdScope` doesn't emit the `before` or `after` event and can thus
+cause a lot of issues. See https://github.com/nodejs/node/issues/14328 for more
+details.
 
 [`Buffer.allocUnsafeSlow(size)`]: buffer.html#buffer_class_method_buffer_allocunsafeslow_size
 [`Buffer.from(array)`]: buffer.html#buffer_class_method_buffer_from_array

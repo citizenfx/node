@@ -20,7 +20,6 @@
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "stream_wrap.h"
-#include "stream_base.h"
 #include "stream_base-inl.h"
 
 #include "env-inl.h"
@@ -29,11 +28,9 @@
 #include "node_buffer.h"
 #include "node_counters.h"
 #include "pipe_wrap.h"
-#include "req-wrap.h"
 #include "req-wrap-inl.h"
 #include "tcp_wrap.h"
 #include "udp_wrap.h"
-#include "util.h"
 #include "util-inl.h"
 
 #include <stdlib.h>  // abort()
@@ -194,7 +191,7 @@ static Local<Object> AcceptHandle(Environment* env, LibuvStreamWrap* parent) {
   Local<Object> wrap_obj;
   UVType* handle;
 
-  wrap_obj = WrapType::Instantiate(env, parent);
+  wrap_obj = WrapType::Instantiate(env, parent, WrapType::SOCKET);
   if (wrap_obj.IsEmpty())
     return Local<Object>();
 
@@ -409,5 +406,5 @@ void LibuvStreamWrap::OnAfterWriteImpl(WriteWrap* w, void* ctx) {
 
 }  // namespace node
 
-NODE_MODULE_CONTEXT_AWARE_BUILTIN(stream_wrap,
+NODE_BUILTIN_MODULE_CONTEXT_AWARE(stream_wrap,
                                   node::LibuvStreamWrap::Initialize)

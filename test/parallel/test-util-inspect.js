@@ -141,7 +141,7 @@ for (const showHidden of [true, false]) {
 // Now do the same checks but from a different context
 for (const showHidden of [true, false]) {
   const ab = vm.runInNewContext('new ArrayBuffer(4)');
-  const dv = vm.runInNewContext('new DataView(ab, 1, 2)', { ab: ab });
+  const dv = vm.runInNewContext('new DataView(ab, 1, 2)', { ab });
   assert.strictEqual(
     util.inspect(ab, showHidden),
     'ArrayBuffer { byteLength: 4 }'
@@ -405,6 +405,8 @@ assert.strictEqual(
 // test positive/negative zero
 assert.strictEqual(util.inspect(0), '0');
 assert.strictEqual(util.inspect(-0), '-0');
+// edge case from check
+assert.strictEqual(util.inspect(-5e-324), '-5e-324');
 
 // test for sparse array
 {

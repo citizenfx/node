@@ -38,7 +38,7 @@ const data = Buffer.alloc(1024 * 32 + 1);
 httpsTest();
 
 function httpsTest() {
-  const sopt = { key: key, cert: cert };
+  const sopt = { key, cert };
 
   const server = https.createServer(sopt, function(req, res) {
     res.setHeader('content-length', data.length);
@@ -67,6 +67,6 @@ const test = common.mustCall(function(res) {
   res.on('data', function(chunk) {
     bytes += chunk.length;
     this.pause();
-    setTimeout(this.resume.bind(this), 1);
+    setTimeout(() => { this.resume(); }, 1);
   });
 });
