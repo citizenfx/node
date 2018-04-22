@@ -68,7 +68,7 @@
 #if NODE_USE_V8_PLATFORM
 #include "libplatform/libplatform.h"
 #endif  // NODE_USE_V8_PLATFORM
-#include "v8-debug.h"
+//#include "v8-debug.h"
 #include "v8-profiler.h"
 #include "zlib.h"
 
@@ -222,6 +222,9 @@ bool force_fips_crypto = false;
 std::string openssl_config;  // NOLINT(runtime/string)
 #endif  // HAVE_OPENSSL
 
+// true if alt mode
+bool citizen_alt_mode = false;
+
 // true if process warnings should be suppressed
 bool no_process_warnings = false;
 bool trace_warnings = false;
@@ -283,6 +286,23 @@ static struct {
       tracing_agent_.reset(nullptr);
       platform_ = new NodePlatform(thread_pool_size, loop, nullptr);
       V8::InitializePlatform(platform_);
+      tracing::TraceEventHelper::SetTracingController(
+        new v8::TracingController());
+    }
+  }
+
+  void InitializeFake(int thread_pool_size, uv_loop_t* loop) {
+    if (trace_enabled) {
+      tracing_agent_.reset(new tracing::Agent());
+      /*platform_ = new NodePlatform(thread_pool_size, loop,
+        tracing_agent_->GetTracingController());
+      V8::InitializePlatform(platform_);*/
+      tracing::TraceEventHelper::SetTracingController(
+        tracing_agent_->GetTracingController());
+    } else {
+      tracing_agent_.reset(nullptr);
+      /*platform_ = new NodePlatform(thread_pool_size, loop, nullptr);
+      V8::InitializePlatform(platform_);*/
       tracing::TraceEventHelper::SetTracingController(
         new v8::TracingController());
     }
@@ -3324,6 +3344,11 @@ void SetupProcessObject(Environment* env,
                              ProcessTitleSetter,
                              env->as_external()).FromJust());
 
+  // process.isCitizenAltMode
+  READONLY_PROPERTY(process,
+    "isCitizenAltMode",
+    (citizen_alt_mode) ? True(env->isolate()) : False(env->isolate()));
+
   // process.version
   READONLY_PROPERTY(process,
                     "version",
@@ -3495,7 +3520,8 @@ void SetupProcessObject(Environment* env,
                     Integer::New(env->isolate(), uv_os_getpid()));
   READONLY_PROPERTY(process, "features", GetFeatures(env));
 
-  process->SetAccessor(FIXED_ONE_BYTE_STRING(env->isolate(), "ppid"),
+  process->SetAccessor(env->context(),
+                       FIXED_ONE_BYTE_STRING(env->isolate(), "ppid"),
                        GetParentProcessId);
 
   auto scheduled_immediate_count =
@@ -4057,6 +4083,8 @@ static void ParseArgs(int* argc,
     } else if (strcmp(arg, "--help") == 0 || strcmp(arg, "-h") == 0) {
       PrintHelp();
       exit(0);
+    } else if (strcmp(arg, "--start-node") == 0) {
+      citizen_alt_mode = true;
     } else if (strcmp(arg, "--eval") == 0 ||
                strcmp(arg, "-e") == 0 ||
                strcmp(arg, "--print") == 0 ||
@@ -4395,7 +4423,7 @@ static void DebugProcess(const FunctionCallbackInfo<Value>& args) {
 
 
 static void DebugPause(const FunctionCallbackInfo<Value>& args) {
-  v8::Debug::DebugBreak(args.GetIsolate());
+  //v8::Debug::DebugBreak(args.GetIsolate());
 }
 
 
@@ -4637,6 +4665,8 @@ void Init(int* argc,
   const char no_typed_array_heap[] = "--typed_array_max_size_in_heap=0";
   V8::SetFlagsFromString(no_typed_array_heap, sizeof(no_typed_array_heap) - 1);
 
+  v8_platform.InitializeFake(v8_thread_pool_size, uv_default_loop());
+
   // We should set node_is_initialized here instead of in node::Start,
   // otherwise embedders using node::Init to initialize everything will not be
   // able to set it and native modules will not load for them.
@@ -4738,6 +4768,7 @@ Environment* CreateEnvironment(IsolateData* isolate_data,
 
 
 void FreeEnvironment(Environment* env) {
+  env->CleanupHandles();
   delete env;
 }
 

@@ -3,6 +3,10 @@
 
 #include "util.h"
 
+namespace v8::base::OS {
+  double TimeCurrentMillis();
+}
+
 namespace node {
 
 using v8::HandleScope;
@@ -136,6 +140,14 @@ bool NodePlatform::IdleTasksEnabled(Isolate* isolate) { return false; }
 double NodePlatform::MonotonicallyIncreasingTime() {
   // Convert nanos to seconds.
   return uv_hrtime() / 1e9;
+}
+
+double NodePlatform::CurrentClockTimeMillis() {
+#ifndef _WIN32
+  return v8::base::OS::TimeCurrentMillis();
+#else
+  return 0.0;
+#endif
 }
 
 TracingController* NodePlatform::GetTracingController() {

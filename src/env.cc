@@ -1,6 +1,7 @@
 #include "node_internals.h"
 #include "async_wrap.h"
 #include "v8-profiler.h"
+#include "base-object-inl.h"
 
 #include <stdio.h>
 #include <algorithm>
@@ -83,14 +84,48 @@ void Environment::Start(int argc,
 }
 
 void Environment::CleanupHandles() {
-  while (HandleCleanup* hc = handle_cleanup_queue_.PopFront()) {
-    handle_cleanup_waiting_++;
-    hc->cb_(this, hc->handle_, hc->arg_);
-    delete hc;
-  }
+  auto close_and_finish = [](Environment* env, uv_handle_t* handle, void* arg) {
+    uv_close(handle, [](uv_handle_t* handle) {
+      HandleWrap* wrap = static_cast<HandleWrap*>(handle->data);
 
-  while (handle_cleanup_waiting_ != 0)
-    uv_run(event_loop(), UV_RUN_ONCE);
+      v8::Locker locker(wrap->env()->isolate());
+      wrap->persistent().Reset();
+
+      auto env = wrap->env();
+      delete wrap;
+
+      env->FinishHandleCleanup(handle);
+    });
+  };
+
+  uv_async_t* init_async = new uv_async_t;
+  uv_async_init(event_loop(), init_async, [] (uv_async_t*) {});
+
+  do 
+  {
+    for (auto w : *handle_wrap_queue()) {
+      RegisterHandleCleanup(w->GetHandle(),
+        close_and_finish,
+        nullptr);
+    }
+
+    while (HandleCleanup* hc = handle_cleanup_queue_.PopFront()) {
+      handle_cleanup_waiting_++;
+      hc->cb_(this, hc->handle_, hc->arg_);
+      delete hc;
+    }
+
+    // wake the event loop
+    uv_async_send(init_async);
+
+    while (handle_cleanup_waiting_ != 0);
+  } while (!handle_wrap_queue()->IsEmpty());
+
+  uv_close(reinterpret_cast<uv_handle_t*>(init_async), [](uv_handle_t* handle)
+  {
+    delete reinterpret_cast<uv_async_t*>(handle);
+  });
+    //uv_run(event_loop(), UV_RUN_ONCE);
 }
 
 void Environment::StartProfilerIdleNotifier() {

@@ -728,7 +728,7 @@ class Environment {
   ReqWrapQueue req_wrap_queue_;
   ListHead<HandleCleanup,
            &HandleCleanup::handle_cleanup_queue_> handle_cleanup_queue_;
-  int handle_cleanup_waiting_;
+  volatile int handle_cleanup_waiting_;
 
   double* heap_statistics_buffer_ = nullptr;
   double* heap_space_statistics_buffer_ = nullptr;

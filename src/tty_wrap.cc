@@ -136,8 +136,9 @@ void TTYWrap::SetRawMode(const FunctionCallbackInfo<Value>& args) {
   ASSIGN_OR_RETURN_UNWRAP(&wrap,
                           args.Holder(),
                           args.GetReturnValue().Set(UV_EBADF));
-  int err = uv_tty_set_mode(&wrap->handle_, args[0]->IsTrue());
-  args.GetReturnValue().Set(err);
+  //int err = uv_tty_set_mode(&wrap->handle_, args[0]->IsTrue());
+  //args.GetReturnValue().Set(err);
+  args.GetReturnValue().Set(0);
 }
 
 

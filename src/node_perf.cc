@@ -231,8 +231,8 @@ void MarkGarbageCollectionEnd(Isolate* isolate,
 
 inline void SetupGarbageCollectionTracking(Environment* env) {
   env->isolate()->AddGCPrologueCallback(MarkGarbageCollectionStart);
-  env->isolate()->AddGCEpilogueCallback(MarkGarbageCollectionEnd,
-                                        static_cast<void*>(env));
+  //env->isolate()->AddGCEpilogueCallback(MarkGarbageCollectionEnd,
+  //                                      static_cast<void*>(env));
 }
 
 inline Local<Value> GetName(Local<Function> fn) {

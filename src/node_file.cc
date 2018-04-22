@@ -164,6 +164,7 @@ void After(uv_fs_t *req) {
 
   Environment* env = req_wrap->env();
   v8::Locker locker(env->isolate());
+  v8::Isolate::Scope isolate_scope(env->isolate());
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 

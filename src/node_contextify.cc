@@ -21,7 +21,7 @@
 
 #include "node_internals.h"
 #include "node_watchdog.h"
-#include "base_object-inl.h"
+#include "base-object-inl.h"
 
 namespace node {
 

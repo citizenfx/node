@@ -76,10 +76,10 @@ void NodeTraceWriter::AppendTraceEvent(TraceObject* trace_event) {
     // to a state where we can start writing trace events to it.
     // Repeatedly constructing and destroying json_trace_writer_ allows
     // us to use V8's JSON writer instead of implementing our own.
-    json_trace_writer_ = TraceWriter::CreateJSONTraceWriter(stream_);
+    //json_trace_writer_ = TraceWriter::CreateJSONTraceWriter(stream_);
   }
   ++total_traces_;
-  json_trace_writer_->AppendTraceEvent(trace_event);
+  //json_trace_writer_->AppendTraceEvent(trace_event);
 }
 
 void NodeTraceWriter::FlushPrivate() {
@@ -91,7 +91,7 @@ void NodeTraceWriter::FlushPrivate() {
       total_traces_ = 0;
       // Destroying the member JSONTraceWriter object appends "]}" to
       // stream_ - in other words, ending a JSON file.
-      delete json_trace_writer_;
+      //delete json_trace_writer_;
     }
     // str() makes a copy of the contents of the stream.
     str = stream_.str();

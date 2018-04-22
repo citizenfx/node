@@ -122,3 +122,5 @@ deps/uv/docs/src/guide/
 
 # do not override V8's .gitignore
 !deps/v8/**
+
+src/node_javascript.cc
