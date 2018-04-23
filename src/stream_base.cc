@@ -73,6 +73,7 @@ void StreamBase::AfterShutdown(ShutdownWrap* req_wrap, int status) {
   CHECK_EQ(req_wrap->persistent().IsEmpty(), false);
 
   v8::Locker locker(env->isolate());
+  v8::Isolate::Scope isolateScope(env->isolate());
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 
@@ -406,6 +407,7 @@ void StreamBase::AfterWrite(WriteWrap* req_wrap, int status) {
   Environment* env = req_wrap->env();
 
   v8::Locker locker(env->isolate());
+  v8::Isolate::Scope isolateScope(env->isolate());
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 

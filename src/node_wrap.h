@@ -55,6 +55,7 @@ namespace node {
 inline uv_stream_t* HandleToStream(Environment* env,
                                    v8::Local<v8::Object> obj) {
   v8::Locker locker(env->isolate());
+  v8::Isolate::Scope isolateScope(env->isolate());
   v8::HandleScope scope(env->isolate());
 
   WITH_GENERIC_UV_STREAM(env, obj, {

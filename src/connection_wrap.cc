@@ -37,6 +37,7 @@ void ConnectionWrap<WrapType, UVType>::OnConnection(uv_stream_t* handle,
 
   Environment* env = wrap_data->env();
   v8::Locker locker(env->isolate());
+  v8::Isolate::Scope isolateScope(env->isolate());
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 
@@ -83,6 +84,7 @@ void ConnectionWrap<WrapType, UVType>::AfterConnect(uv_connect_t* req,
   Environment* env = wrap->env();
 
   v8::Locker locker(env->isolate());
+  v8::Isolate::Scope isolateScope(env->isolate());
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 

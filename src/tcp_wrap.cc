@@ -56,6 +56,7 @@ Local<Object> TCPWrap::Instantiate(Environment* env,
                                    AsyncWrap* parent,
                                    TCPWrap::SocketType type) {
   v8::Locker locker(env->isolate());
+  v8::Isolate::Scope isolateScope(env->isolate());
   EscapableHandleScope handle_scope(env->isolate());
   AsyncHooks::DefaultTriggerAsyncIdScope trigger_scope(
     env, parent->get_async_id());
@@ -354,6 +355,7 @@ Local<Object> AddressToJS(Environment* env,
                           const sockaddr* addr,
                           Local<Object> info) {
   v8::Locker locker(env->isolate());
+  v8::Isolate::Scope isolateScope(env->isolate());
   EscapableHandleScope scope(env->isolate());
   char ip[INET6_ADDRSTRLEN];
   const sockaddr_in *a4;

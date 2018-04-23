@@ -362,6 +362,7 @@ inline Environment::Environment(IsolateData* isolate_data,
 
 inline Environment::~Environment() {
   v8::Locker locker(isolate());
+  v8::Isolate::Scope isolateScope(isolate());
   v8::HandleScope handle_scope(isolate());
 
 #if HAVE_INSPECTOR

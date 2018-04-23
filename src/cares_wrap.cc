@@ -1834,6 +1834,7 @@ void AfterGetAddrInfo(uv_getaddrinfo_t* req, int status, struct addrinfo* res) {
   Environment* env = req_wrap->env();
 
   v8::Locker locker(env->isolate());
+  v8::Isolate::Scope isolateScope(env->isolate());
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 
@@ -1901,6 +1902,7 @@ void AfterGetNameInfo(uv_getnameinfo_t* req,
   Environment* env = req_wrap->env();
 
   v8::Locker locker(env->isolate());
+  v8::Isolate::Scope isolateScope(env->isolate());
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 

@@ -154,6 +154,7 @@ void FSEventWrap::OnEvent(uv_fs_event_t* handle, const char* filename,
   Environment* env = wrap->env();
 
   v8::Locker locker(env->isolate());
+  v8::Isolate::Scope isolateScope(env->isolate());
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 

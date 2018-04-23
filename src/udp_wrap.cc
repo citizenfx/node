@@ -439,6 +439,7 @@ void UDPWrap::OnSend(uv_udp_send_t* req, int status) {
   if (req_wrap->have_callback()) {
     Environment* env = req_wrap->env();
     v8::Locker locker(env->isolate());
+    v8::Isolate::Scope isolateScope(env->isolate());
     HandleScope handle_scope(env->isolate());
     Context::Scope context_scope(env->context());
     Local<Value> arg[] = {
@@ -474,6 +475,7 @@ void UDPWrap::OnRecv(uv_udp_t* handle,
   Environment* env = wrap->env();
 
   v8::Locker locker(env->isolate());
+  v8::Isolate::Scope isolateScope(env->isolate());
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 
@@ -503,6 +505,7 @@ Local<Object> UDPWrap::Instantiate(Environment* env,
                                    AsyncWrap* parent,
                                    UDPWrap::SocketType type) {
   v8::Locker locker(env->isolate());
+  v8::Isolate::Scope isolateScope(env->isolate());
   EscapableHandleScope scope(env->isolate());
   AsyncHooks::DefaultTriggerAsyncIdScope trigger_scope(
     env, parent->get_async_id());
