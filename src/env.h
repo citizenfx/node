@@ -675,9 +675,11 @@ class Environment {
   typedef ListHead<HandleWrap, &HandleWrap::handle_wrap_queue_> HandleWrapQueue;
   typedef ListHead<ReqWrap<uv_req_t>, &ReqWrap<uv_req_t>::req_wrap_queue_>
           ReqWrapQueue;
+  typedef ListHead<BaseObject, &BaseObject::base_object_queue_> BaseObjectQueue;
 
   inline HandleWrapQueue* handle_wrap_queue() { return &handle_wrap_queue_; }
   inline ReqWrapQueue* req_wrap_queue() { return &req_wrap_queue_; }
+  inline BaseObjectQueue* base_object_queue() { return &base_object_queue_; }
 
   static const int kContextEmbedderDataIndex = NODE_CONTEXT_EMBEDDER_DATA_INDEX;
 
@@ -726,6 +728,7 @@ class Environment {
 
   HandleWrapQueue handle_wrap_queue_;
   ReqWrapQueue req_wrap_queue_;
+  BaseObjectQueue base_object_queue_;
   ListHead<HandleCleanup,
            &HandleCleanup::handle_cleanup_queue_> handle_cleanup_queue_;
   volatile int handle_cleanup_waiting_;

@@ -24,6 +24,7 @@
 
 #if defined(NODE_WANT_INTERNALS) && NODE_WANT_INTERNALS
 
+#include "util.h"
 #include "v8.h"
 
 namespace node {
@@ -67,6 +68,10 @@ class BaseObject {
 
   v8::Persistent<v8::Object> persistent_handle_;
   Environment* env_;
+
+  ListNode<BaseObject> base_object_queue_;
+
+  friend class Environment;
 };
 
 }  // namespace node

@@ -125,6 +125,10 @@ void Environment::CleanupHandles() {
   {
     delete reinterpret_cast<uv_async_t*>(handle);
   });
+
+  for (auto baseObject : *base_object_queue()) {
+	  baseObject->env_ = nullptr;
+  }
     //uv_run(event_loop(), UV_RUN_ONCE);
 }
 

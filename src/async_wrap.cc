@@ -666,6 +666,10 @@ AsyncWrap::AsyncWrap(Environment* env,
 
 
 AsyncWrap::~AsyncWrap() {
+	if (!env()) {
+		return;
+  }
+
   EmitTraceEventDestroy();
   EmitDestroy(env(), get_async_id());
 }

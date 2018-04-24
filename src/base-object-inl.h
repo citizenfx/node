@@ -35,6 +35,7 @@ inline BaseObject::BaseObject(Environment* env, v8::Local<v8::Object> handle)
     : persistent_handle_(env->isolate(), handle),
       env_(env) {
   CHECK_EQ(false, handle.IsEmpty());
+  env->base_object_queue()->PushBack(this);
   // The zero field holds a pointer to the handle. Immediately set it to
   // nullptr in case it's accessed by the user before construction is complete.
   if (handle->InternalFieldCount() > 0)
