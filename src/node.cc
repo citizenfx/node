@@ -4659,11 +4659,13 @@ void Init(int* argc,
   }
 #endif
 
+#ifdef _WIN32
   // Unconditionally force typed arrays to allocate outside the v8 heap. This
   // is to prevent memory pointers from being moved around that are returned by
   // Buffer::Data().
   const char no_typed_array_heap[] = "--typed_array_max_size_in_heap=0";
   V8::SetFlagsFromString(no_typed_array_heap, sizeof(no_typed_array_heap) - 1);
+#endif
 
   v8_platform.InitializeFake(v8_thread_pool_size, uv_default_loop());
 
@@ -4930,6 +4932,13 @@ int Start(int argc, char** argv) {
             "and could change at any time.\n");
     v8_platform.StartTracingAgent();
   }
+
+  char exePath[1024];
+  size_t exePathSize = sizeof(exePath);
+
+  uv_exepath(exePath, &exePathSize);
+  V8::InitializeICUDefaultLocation(exePath);
+
   V8::Initialize();
   node::performance::performance_v8_start = PERFORMANCE_NOW();
   v8_initialized = true;
