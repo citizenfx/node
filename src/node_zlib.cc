@@ -382,6 +382,8 @@ class ZCtx : public AsyncWrap {
     ZCtx* ctx = ContainerOf(&ZCtx::work_req_, work_req);
     Environment* env = ctx->env();
 
+    v8::Locker locker(env->isolate());
+    v8::Isolate::Scope isolateScope(env->isolate());
     HandleScope handle_scope(env->isolate());
     Context::Scope context_scope(env->context());
 
@@ -414,6 +416,8 @@ class ZCtx : public AsyncWrap {
       message = ctx->strm_.msg;
     }
 
+    v8::Locker locker(env->isolate());
+    v8::Isolate::Scope isolateScope(env->isolate());
     HandleScope scope(env->isolate());
     Local<Value> args[2] = {
       OneByteString(env->isolate(), message),
