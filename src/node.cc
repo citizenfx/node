@@ -4072,7 +4072,7 @@ static void ParseArgs(int* argc,
   while (index < nargs && argv[index][0] == '-' && !short_circuit) {
     const char* const arg = argv[index];
     unsigned int args_consumed = 1;
-
+     
     CheckIfAllowedInEnv(argv[0], is_env, arg);
 
     if (debug_options.ParseOption(argv[0], arg)) {
