@@ -5705,6 +5705,8 @@ void RandomBytesAfter(uv_work_t* work_req, int status) {
   RandomBytesRequest* req =
       ContainerOf(&RandomBytesRequest::work_req_, work_req);
   Environment* env = req->env();
+  Isolate::Scope isolate_scope(env->isolate());
+  v8::Locker locker(env->isolate());
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
   Local<Value> argv[2];
