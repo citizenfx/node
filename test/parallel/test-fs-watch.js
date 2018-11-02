@@ -14,7 +14,7 @@ class WatchTestCase {
     this.field = field;
     this.shouldSkip = !shouldInclude;
   }
-  get dirPath() { return join(common.tmpDir, this.dirName); }
+  get dirPath() { return join(tmpdir.path, this.dirName); }
   get filePath() { return join(this.dirPath, this.fileName); }
 }
 
@@ -35,7 +35,8 @@ const cases = [
   )
 ];
 
-common.refreshTmpDir();
+const tmpdir = require('../common/tmpdir');
+tmpdir.refresh();
 
 for (const testCase of cases) {
   if (testCase.shouldSkip) continue;
@@ -63,6 +64,8 @@ for (const testCase of cases) {
     else
       assert.strictEqual(eventType, 'change');
     assert.strictEqual(argFilename, testCase.fileName);
+
+    watcher.start();  // should not crash
 
     // end of test case
     watcher.close();

@@ -134,9 +134,9 @@ An `'error'` event is emitted on the [`tls.TLSSocket`][] instance when this
 threshold is exceeded. The limits are configurable:
 
 * `tls.CLIENT_RENEG_LIMIT` {number} Specifies the number of renegotiation
-  requests. Defaults to `3`.
+  requests. **Default:** `3`.
 * `tls.CLIENT_RENEG_WINDOW` {number} Specifies the time renegotiation window
-  in seconds. Defaults to `600` (10 minutes).
+  in seconds. **Default:** `600` (10 minutes).
 
 *Note*: The default renegotiation limits should not be modified without a full
 understanding of the implications and risks.
@@ -374,7 +374,7 @@ added: v0.6.0
 -->
 
 Returns the bound address, the address family name, and port of the
-server as reported by the operating system.  See [`net.Server.address()`][] for
+server as reported by the operating system. See [`net.Server.address()`][] for
 more information.
 
 ### server.close([callback])
@@ -462,7 +462,7 @@ changes:
 * `options` {Object}
   * `isServer`: The SSL/TLS protocol is asymmetrical, TLSSockets must know if
     they are to behave as a server or a client. If `true` the TLS socket will be
-    instantiated as a server.  Defaults to `false`.
+    instantiated as a server. **Default:** `false`.
   * `server` {net.Server} An optional [`net.Server`][] instance.
   * `requestCert`: Whether to authenticate the remote peer by requesting a
      certificate. Clients always request a server certificate. Servers
@@ -584,6 +584,23 @@ if called on a server socket. The supported types are `'DH'` and `'ECDH'`. The
 
 For Example: `{ type: 'ECDH', name: 'prime256v1', size: 256 }`
 
+### tlsSocket.getFinished()
+<!-- YAML
+added: v8.12.0
+-->
+
+* Returns: {Buffer|undefined} The latest `Finished` message that has been
+sent to the socket as part of a SSL/TLS handshake, or `undefined` if
+no `Finished` message has been sent yet.
+
+As the `Finished` messages are message digests of the complete handshake
+(with a total of 192 bits for TLS 1.0 and more for SSL 3.0), they can
+be used for external authentication procedures when the authentication
+provided by SSL/TLS is not desired or is not enough.
+
+Corresponds to the `SSL_get_finished` routine in OpenSSL and may be used
+to implement the `tls-unique` channel binding from [RFC 5929][].
+
 ### tlsSocket.getPeerCertificate([detailed])
 <!-- YAML
 added: v0.11.4
@@ -620,12 +637,29 @@ For example:
    { ... another certificate, possibly with a .issuerCertificate ... },
   raw: < RAW DER buffer >,
   valid_from: 'Nov 11 09:52:22 2009 GMT',
-  valid_to: 'Nov  6 09:52:22 2029 GMT',
+  valid_to: 'Nov 6 09:52:22 2029 GMT',
   fingerprint: '2A:7A:C2:DD:E5:F9:CC:53:72:35:99:7A:02:5A:71:38:52:EC:8A:DF',
   serialNumber: 'B9B0D332A1AA5635' }
 ```
 
 If the peer does not provide a certificate, an empty object will be returned.
+
+### tlsSocket.getPeerFinished()
+<!-- YAML
+added: v8.12.0
+-->
+
+* Returns: {Buffer|undefined} The latest `Finished` message that is expected
+or has actually been received from the socket as part of a SSL/TLS handshake,
+or `undefined` if there is no `Finished` message so far.
+
+As the `Finished` messages are message digests of the complete handshake
+(with a total of 192 bits for TLS 1.0 and more for SSL 3.0), they can
+be used for external authentication procedures when the authentication
+provided by SSL/TLS is not desired or is not enough.
+
+Corresponds to the `SSL_get_peer_finished` routine in OpenSSL and may be used
+to implement the `tls-unique` channel binding from [RFC 5929][].
 
 ### tlsSocket.getProtocol()
 <!-- YAML
@@ -709,9 +743,9 @@ added: v0.11.8
 -->
 
 * `options` {Object}
-  * `rejectUnauthorized` {boolean} If not `false`, the server certificate is verified
-    against the list of supplied CAs. An `'error'` event is emitted if
-    verification fails; `err.code` contains the OpenSSL error code. Defaults to
+  * `rejectUnauthorized` {boolean} If not `false`, the server certificate is
+    verified against the list of supplied CAs. An `'error'` event is emitted if
+    verification fails; `err.code` contains the OpenSSL error code. **Default:**
     `true`.
   * `requestCert`
 * `callback` {Function} A function that will be called when the renegotiation
@@ -732,8 +766,8 @@ after `handshakeTimeout` timeout.
 added: v0.11.11
 -->
 
-* `size` {number} The maximum TLS fragment size. Defaults to `16384`. The
-  maximum value is `16384`.
+* `size` {number} The maximum TLS fragment size. The maximum value is `16384`.
+  **Default:** `16384`.
 
 The `tlsSocket.setMaxSendFragment()` method sets the maximum TLS fragment size.
 Returns `true` if setting the limit succeeded; `false` otherwise.
@@ -814,7 +848,8 @@ changes:
 -->
 
 * `options` {Object}
-  * `host` {string} Host the client should connect to, defaults to 'localhost'.
+  * `host` {string} Host the client should connect to. **Default:**
+    `'localhost'`.
   * `port` {number} Port the client should connect to.
   * `path` {string} Creates unix socket connection to path. If this option is
     specified, `host` and `port` are ignored.
@@ -822,14 +857,14 @@ changes:
     rather than creating a new socket. Typically, this is an instance of
     [`net.Socket`][], but any `Duplex` stream is allowed.
     If this option is specified, `path`, `host` and `port` are ignored,
-    except for certificate validation.  Usually, a socket is already connected
+    except for certificate validation. Usually, a socket is already connected
     when passed to `tls.connect()`, but it can be connected later. Note that
     connection/disconnection/destruction of `socket` is the user's
     responsibility, calling `tls.connect()` will not cause `net.connect()` to be
     called.
-  * `rejectUnauthorized` {boolean} If not `false`, the server certificate is verified
-    against the list of supplied CAs. An `'error'` event is emitted if
-    verification fails; `err.code` contains the OpenSSL error code. Defaults to
+  * `rejectUnauthorized` {boolean} If not `false`, the server certificate is
+    verified against the list of supplied CAs. An `'error'` event is emitted if
+    verification fails; `err.code` contains the OpenSSL error code. **Default:**
     `true`.
   * `NPNProtocols` {string[]|Buffer[]|Uint8Array[]|Buffer|Uint8Array}
     An array of strings, `Buffer`s or `Uint8Array`s, or a single `Buffer` or
@@ -855,12 +890,13 @@ changes:
   * `minDHSize` {number} Minimum size of the DH parameter in bits to accept a
     TLS connection. When a server offers a DH parameter with a size less
     than `minDHSize`, the TLS connection is destroyed and an error is thrown.
-    Defaults to `1024`.
+    **Default:** `1024`.
   * `secureContext`: Optional TLS context object created with
     [`tls.createSecureContext()`][]. If a `secureContext` is _not_ provided, one
     will be created by passing the entire `options` object to
     `tls.createSecureContext()`.
-  * `lookup`: {Function} Custom lookup function. Defaults to [`dns.lookup()`][].
+  * `lookup`: {Function} Custom lookup function. **Default:**
+    [`dns.lookup()`][].
   * ...: Optional [`tls.createSecureContext()`][] options that are used if the
     `secureContext` option is missing, otherwise they are ignored.
 * `callback` {Function}
@@ -983,7 +1019,7 @@ changes:
     decrypted with `object.passphrase` if provided, or `options.passphrase` if it is not.
   * `key` {string|string[]|Buffer|Buffer[]|Object[]} Optional private keys in
     PEM format. PEM allows the option of private keys being encrypted. Encrypted
-    keys will be decrypted with `options.passphrase`.  Multiple keys using
+    keys will be decrypted with `options.passphrase`. Multiple keys using
     different algorithms can be provided either as an array of unencrypted key
     strings or buffers, or an array of objects in the form `{pem:
     <string|buffer>[, passphrase: <string>]}`. The object form can only occur in
@@ -996,7 +1032,7 @@ changes:
     consist of the PEM formatted certificate for a provided private `key`,
     followed by the PEM formatted intermediate certificates (if any), in order,
     and not including the root CA (the root CA must be pre-known to the peer,
-    see `ca`).  When providing multiple cert chains, they do not have to be in
+    see `ca`). When providing multiple cert chains, they do not have to be in
     the same order as their private keys in `key`. If the intermediate
     certificates are not provided, the peer will not be able to validate the
     certificate, and the handshake will fail.
@@ -1006,7 +1042,7 @@ changes:
     using this option. The value can be a string or Buffer, or an Array of
     strings and/or Buffers. Any string or Buffer can contain multiple PEM CAs
     concatenated together. The peer's certificate must be chainable to a CA
-    trusted by the server for the connection to be authenticated.  When using
+    trusted by the server for the connection to be authenticated. When using
     certificates that are not chainable to a well-known CA, the certificate's CA
     must be explicitly specified as a trusted or the connection will fail to
     authenticate.
@@ -1018,7 +1054,7 @@ changes:
   * `crl` {string|string[]|Buffer|Buffer[]} Optional PEM formatted
     CRLs (Certificate Revocation Lists).
   * `ciphers` {string} Optional cipher suite specification, replacing the
-    default.  For more information, see [modifying the default cipher suite][].
+    default. For more information, see [modifying the default cipher suite][].
   * `honorCipherOrder` {boolean} Attempt to use the server's cipher suite
     preferences instead of the client's. When `true`, causes
     `SSL_OP_CIPHER_SERVER_PREFERENCE` to be set in `secureOptions`, see
@@ -1026,10 +1062,10 @@ changes:
   * `ecdhCurve` {string} A string describing a named curve or a colon separated
     list of curve NIDs or names, for example `P-521:P-384:P-256`, to use for
     ECDH key agreement, or `false` to disable ECDH. Set to `auto` to select the
-    curve automatically. Defaults to [`tls.DEFAULT_ECDH_CURVE`]. Use
-    [`crypto.getCurves()`][] to obtain a list of available curve names. On
-    recent releases, `openssl ecparam -list_curves` will also display the name
-    and description of each available elliptic curve.
+    curve automatically. Use [`crypto.getCurves()`][] to obtain a list of
+    available curve names. On recent releases, `openssl ecparam -list_curves`
+    will also display the name and description of each available elliptic curve.
+    **Default:** [`tls.DEFAULT_ECDH_CURVE`].
   * `dhparam` {string|Buffer} Diffie Hellman parameters, required for
     [Perfect Forward Secrecy][]. Use `openssl dhparam` to create the parameters.
     The key length must be greater than or equal to 1024 bits, otherwise an
@@ -1037,8 +1073,8 @@ changes:
     for stronger security. If omitted or invalid, the parameters are silently
     discarded and DHE ciphers will not be available.
   * `secureProtocol` {string} Optional SSL method to use, default is
-    `"SSLv23_method"`. The possible values are listed as [SSL_METHODS][], use
-    the function names as strings. For example, `"SSLv3_method"` to force SSL
+    `'SSLv23_method'`. The possible values are listed as [SSL_METHODS][], use
+    the function names as strings. For example, `'SSLv3_method'` to force SSL
     version 3.
   * `secureOptions` {number} Optionally affect the OpenSSL protocol behavior,
     which is not usually necessary. This should be used carefully if at all!
@@ -1082,15 +1118,15 @@ changes:
 
 * `options` {Object}
   * `handshakeTimeout` {number} Abort the connection if the SSL/TLS handshake
-    does not finish in the specified number of milliseconds. Defaults to `120`
-    seconds. A `'tlsClientError'` is emitted on the `tls.Server` object whenever
-    a handshake times out.
+    does not finish in the specified number of milliseconds.
+    A `'tlsClientError'` is emitted on the `tls.Server` object whenever
+    a handshake times out. **Default:** `120000` (120 seconds).
   * `requestCert` {boolean} If `true` the server will request a certificate from
-    clients that connect and attempt to verify that certificate. Defaults to
+    clients that connect and attempt to verify that certificate. **Default:**
     `false`.
   * `rejectUnauthorized` {boolean} If not `false` the server will reject any
     connection which is not authorized with the list of supplied CAs. This
-    option only has an effect if `requestCert` is `true`. Defaults to `true`.
+    option only has an effect if `requestCert` is `true`. **Default:** `true`.
   * `NPNProtocols` {string[]|Buffer[]|Uint8Array[]|Buffer|Uint8Array}
     An array of strings, `Buffer`s or `Uint8Array`s, or a single `Buffer` or
     `Uint8Array` containing supported NPN protocols. `Buffer`s should have the
@@ -1124,7 +1160,7 @@ changes:
     servers, the identity options (`pfx` or `key`/`cert`) are usually required.
 * `secureConnectionListener` {Function}
 
-Creates a new [tls.Server][].  The `secureConnectionListener`, if provided, is
+Creates a new [tls.Server][]. The `secureConnectionListener`, if provided, is
 automatically set as a listener for the [`'secureConnection'`][] event.
 
 *Note*: The `ticketKeys` options is automatically shared between `cluster`
@@ -1284,7 +1320,7 @@ changes:
   * `secureContext`: An optional TLS context object from
      [`tls.createSecureContext()`][]
   * `isServer`: If `true` the TLS socket will be instantiated in server-mode.
-    Defaults to `false`.
+    **Default:** `false`.
   * `server` {net.Server} An optional [`net.Server`][] instance
   * `requestCert`: Optional, see [`tls.createServer()`][]
   * `rejectUnauthorized`: Optional, see [`tls.createServer()`][]
@@ -1359,3 +1395,4 @@ where `secure_socket` has the same API as `pair.cleartext`.
 [specific attacks affecting larger AES key sizes]: https://www.schneier.com/blog/archives/2009/07/another_new_aes.html
 [tls.Server]: #tls_class_tls_server
 [`dns.lookup()`]: dns.html#dns_dns_lookup_hostname_options_callback
+[RFC 5929]: https://tools.ietf.org/html/rfc5929

@@ -82,9 +82,9 @@ added: v0.11.3
 
 The `util.debuglog()` method is used to create a function that conditionally
 writes debug messages to `stderr` based on the existence of the `NODE_DEBUG`
-environment variable.  If the `section` name appears within the value of that
+environment variable. If the `section` name appears within the value of that
 environment variable, then the returned function operates similar to
-[`console.error()`][].  If not, then the returned function is a no-op.
+[`console.error()`][]. If not, then the returned function is a no-op.
 
 For example:
 
@@ -102,7 +102,7 @@ it will output something like:
 FOO 3245: hello from foo [123]
 ```
 
-where `3245` is the process id.  If it is not run with that
+where `3245` is the process id. If it is not run with that
 environment variable set, then it will not print anything.
 
 Multiple comma-separated `section` names may be specified in the `NODE_DEBUG`
@@ -172,7 +172,7 @@ corresponding argument. Supported placeholders are:
 * `%d` - Number (integer or floating point value).
 * `%i` - Integer.
 * `%f` - Floating point value.
-* `%j` - JSON.  Replaced with the string `'[Circular]'` if the argument
+* `%j` - JSON. Replaced with the string `'[Circular]'` if the argument
 contains circular references.
 * `%o` - Object. A string representation of an object
   with generic JavaScript object formatting.
@@ -217,6 +217,25 @@ without any formatting.
 util.format('%% %s'); // '%% %s'
 ```
 
+## util.getSystemErrorName(err)
+<!-- YAML
+added: v8.12.0
+-->
+
+* `err` {number}
+* Returns: {string}
+
+Returns the string name for a numeric error code that comes from a Node.js API.
+The mapping between error codes and error names is platform-dependent.
+See [Common System Errors][] for the names of common errors.
+
+```js
+fs.access('file/that/does/not/exist', (err) => {
+  const name = util.getSystemErrorName(err.errno);
+  console.error(name);  // ENOENT
+});
+```
+
 ## util.inherits(constructor, superConstructor)
 <!-- YAML
 added: v0.3.0
@@ -233,7 +252,7 @@ that the two styles are [semantically incompatible][].
 * `constructor` {Function}
 * `superConstructor` {Function}
 
-Inherit the prototype methods from one [constructor][] into another.  The
+Inherit the prototype methods from one [constructor][] into another. The
 prototype of `constructor` will be set to a new object created from
 `superConstructor`.
 
@@ -307,26 +326,26 @@ changes:
 * `object` {any} Any JavaScript primitive or Object.
 * `options` {Object}
   * `showHidden` {boolean} If `true`, the `object`'s non-enumerable symbols and
-    properties will be included in the formatted result. Defaults to `false`.
+    properties will be included in the formatted result. **Default:** `false`.
   * `depth` {number} Specifies the number of times to recurse while formatting
     the `object`. This is useful for inspecting large complicated objects.
     Defaults to `2`. To make it recurse indefinitely pass `null`.
   * `colors` {boolean} If `true`, the output will be styled with ANSI color
-    codes. Defaults to `false`. Colors are customizable, see
-    [Customizing `util.inspect` colors][].
+    codes. Colors are customizable, see [Customizing `util.inspect` colors][].
+    **Default:** `false`.
   * `customInspect` {boolean} If `false`, then custom `inspect(depth, opts)`
     functions exported on the `object` being inspected will not be called.
-    Defaults to `true`.
+    **Default:** `true`.
   * `showProxy` {boolean} If `true`, then objects and functions that are
     `Proxy` objects will be introspected to show their `target` and `handler`
-    objects. Defaults to `false`.
+    objects. **Default:** `false`.
   * `maxArrayLength` {number} Specifies the maximum number of array and
-    `TypedArray` elements to include when formatting. Defaults to `100`. Set to
-    `null` to show all array elements. Set to `0` or negative to show no array
-    elements.
+    `TypedArray` elements to include when formatting. Set to `null` to show all
+    array elements. Set to `0` or negative to show no array elements.
+    **Default:** `100`.
   * `breakLength` {number} The length at which an object's keys are split
     across multiple lines. Set to `Infinity` to format an object as a single
-    line. Defaults to 60 for legacy compatibility.
+    line. **Default:** `60` for legacy compatibility.
 
 The `util.inspect()` method returns a string representation of `object` that is
 primarily useful for debugging. Additional `options` may be passed that alter
@@ -639,15 +658,15 @@ is not supported.
 ### new TextDecoder([encoding[, options]])
 
 * `encoding` {string} Identifies the `encoding` that this `TextDecoder` instance
-  supports. Defaults to `'utf-8'`.
+  supports. **Default:** `'utf-8'`.
 * `options` {Object}
-  * `fatal` {boolean} `true` if decoding failures are fatal. Defaults to
-    `false`. This option is only supported when ICU is enabled (see
-    [Internationalization][]).
+  * `fatal` {boolean} `true` if decoding failures are fatal. This option is only
+    supported when ICU is enabled (see [Internationalization][]). **Default:**
+    `false`.
   * `ignoreBOM` {boolean} When `true`, the `TextDecoder` will include the byte
      order mark in the decoded result. When `false`, the byte order mark will
      be removed from the output. This option is only used when `encoding` is
-     `'utf-8'`, `'utf-16be'` or `'utf-16le'`. Defaults to `false`.
+     `'utf-8'`, `'utf-16be'` or `'utf-16le'`. **Default:** `false`.
 
 Creates an new `TextDecoder` instance. The `encoding` may specify one of the
 supported encodings or an alias.
@@ -658,7 +677,7 @@ supported encodings or an alias.
   Typed Array instance containing the encoded data.
 * `options` {Object}
   * `stream` {boolean} `true` if additional chunks of data are expected.
-    Defaults to `false`.
+    **Default:** `false`.
 * Returns: {string}
 
 Decodes the `input` and returns a string. If `options.stream` is `true`, any
@@ -703,7 +722,7 @@ const uint8array = encoder.encode('this is some data');
 
 ### textEncoder.encode([input])
 
-* `input` {string} The text to encode. Defaults to an empty string.
+* `input` {string} The text to encode. **Default:** an empty string.
 * Returns: {Uint8Array}
 
 UTF-8 encodes the `input` string and returns a `Uint8Array` containing the
@@ -1191,15 +1210,16 @@ Deprecated predecessor of `console.log`.
 [`Array.isArray`]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/isArray
 [`Buffer.isBuffer()`]: buffer.html#buffer_class_method_buffer_isbuffer_obj
 [`Error`]: errors.html#errors_class_error
-[`Object.assign()`]: https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Object/assign
+[`Object.assign()`]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign
 [`console.error()`]: console.html#console_console_error_data_args
 [`console.log()`]: console.html#console_console_log_data_args
 [`util.inspect()`]: #util_util_inspect_object_options
 [`util.promisify()`]: #util_util_promisify_original
+[Common System Errors]: errors.html#errors_common_system_errors
 [Custom inspection functions on Objects]: #util_custom_inspection_functions_on_objects
 [Custom promisified functions]: #util_custom_promisified_functions
 [Customizing `util.inspect` colors]: #util_customizing_util_inspect_colors
 [Internationalization]: intl.html
 [WHATWG Encoding Standard]: https://encoding.spec.whatwg.org/
-[constructor]: https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Object/constructor
+[constructor]: https://developer.mozilla.org/en-US/JavaScript/Reference/Global_Objects/Object/constructor
 [semantically incompatible]: https://github.com/nodejs/node/issues/4179

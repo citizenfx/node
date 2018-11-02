@@ -105,7 +105,7 @@ if /i "%1"=="build-release" set build_release=1&set sign=1&goto arg-ok
 if /i "%1"=="upload"        set upload=1&goto arg-ok
 if /i "%1"=="small-icu"     set i18n_arg=%1&goto arg-ok
 if /i "%1"=="full-icu"      set i18n_arg=%1&goto arg-ok
-if /i "%1"=="intl-none"     set i18n_arg=%1&goto arg-ok
+if /i "%1"=="intl-none"     set i18n_arg=none&goto arg-ok
 if /i "%1"=="without-intl"  set i18n_arg=none&goto arg-ok
 if /i "%1"=="download-all"  set download_arg="--download=all"&goto arg-ok
 if /i "%1"=="ignore-flaky"  set test_args=%test_args% --flaky-tests=dontcare&goto arg-ok
@@ -161,7 +161,6 @@ if defined link_module      set configure_flags=%configure_flags% %link_module%
 if defined i18n_arg         set configure_flags=%configure_flags% --with-intl=%i18n_arg%
 if defined config_flags     set configure_flags=%configure_flags% %config_flags%
 if defined target_arch      set configure_flags=%configure_flags% --dest-cpu=%target_arch%
-if defined TAG              set configure_flags=%configure_flags% --tag=%TAG%
 
 if not exist "%~dp0deps\icu" goto no-depsicu
 if "%target%"=="Clean" echo deleting %~dp0deps\icu
@@ -169,6 +168,8 @@ if "%target%"=="Clean" rmdir /S /Q %~dp0deps\icu
 :no-depsicu
 
 call :getnodeversion || exit /b 1
+
+if defined TAG set configure_flags=%configure_flags% --tag=%TAG%
 
 if "%target%"=="Clean" rmdir /Q /S "%~dp0%config%\node-v%FULLVERSION%-win-%target_arch%" > nul 2> nul
 
@@ -536,7 +537,7 @@ if defined lint_js_ci goto lint-js-ci
 if not defined lint_js goto exit
 if not exist tools\eslint goto no-lint
 echo running lint-js
-%config%\node tools\eslint\bin\eslint.js --cache --rule "linebreak-style: 0" --rulesdir=tools\eslint-rules --ext=.js,.md benchmark doc lib test tools
+%config%\node tools\eslint\bin\eslint.js --cache --rule "linebreak-style: 0" --rulesdir=tools\eslint-rules --ext=.js,.mjs,.md benchmark doc lib test tools
 goto exit
 
 :lint-js-ci

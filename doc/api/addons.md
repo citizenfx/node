@@ -34,8 +34,9 @@ involving knowledge of several components and APIs :
 
  - Node.js includes a number of other statically linked libraries including
    OpenSSL. These other libraries are located in the `deps/` directory in the
-   Node.js source tree. Only the V8 and OpenSSL symbols are purposefully
-   re-exported by Node.js and may be used to various extents by Addons.
+   Node.js source tree. Only the libuv, OpenSSL, V8 and zlib symbols are
+   purposefully re-exported by Node.js and may be used to various extents by
+   Addons.
    See [Linking to Node.js' own dependencies][] for additional information.
 
 All of the following examples are available for [download][] and may
@@ -101,7 +102,7 @@ Addon module name is `addon`.
 Once the source code has been written, it must be compiled into the binary
 `addon.node` file. To do so, create a file called `binding.gyp` in the
 top-level of the project describing the build configuration of the module
-using a JSON-like format. This file is used by [node-gyp][] -- a tool written
+using a JSON-like format. This file is used by [node-gyp][] — a tool written
 specifically to compile Node.js Addons.
 
 ```json

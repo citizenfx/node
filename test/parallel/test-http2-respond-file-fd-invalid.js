@@ -13,7 +13,7 @@ const {
 const errorCheck = common.expectsError({
   code: 'ERR_HTTP2_STREAM_ERROR',
   type: Error,
-  message: `Stream closed with error code ${NGHTTP2_INTERNAL_ERROR}`
+  message: 'Stream closed with error code NGHTTP2_INTERNAL_ERROR'
 }, 2);
 
 const server = http2.createServer();
@@ -31,7 +31,7 @@ server.listen(0, () => {
   req.on('data', common.mustNotCall());
   req.on('end', common.mustCall(() => {
     assert.strictEqual(req.rstCode, NGHTTP2_INTERNAL_ERROR);
-    client.destroy();
+    client.close();
     server.close();
   }));
   req.end();

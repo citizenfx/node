@@ -238,6 +238,14 @@ added: v7.7.0
 A comma separated list of categories that should be traced when trace event
 tracing is enabled using `--trace-events-enabled`.
 
+### `--trace-event-file-pattern`
+<!-- YAML
+added: v8.12.0
+-->
+
+Template string specifying the filepath for the trace event data, it
+supports `${rotation}` and `${pid}`.
+
 ### `--zero-fill-buffers`
 <!-- YAML
 added: v6.0.0
@@ -454,7 +462,7 @@ added: v8.0.0
 
 A space-separated list of command line options. `options...` are interpreted as
 if they had been specified on the command line before the actual command line
-(so they can be overridden).  Node will exit with an error if an option that is
+(so they can be overridden). Node will exit with an error if an option that is
 not allowed in the environment is used, such as `-p` or a script file.
 
 Node options that are allowed are:
@@ -474,6 +482,7 @@ Node options that are allowed are:
 - `--trace-deprecation`
 - `--trace-events-categories`
 - `--trace-events-enabled`
+- `--trace-event-file-pattern`
 - `--trace-sync-io`
 - `--trace-warnings`
 - `--track-heap-objects`
@@ -485,6 +494,8 @@ Node options that are allowed are:
 V8 options that are allowed are:
 - `--abort-on-uncaught-exception`
 - `--max-old-space-size`
+- `--perf-basic-prof`
+- `--perf-prof`
 - `--stack-trace-limit`
 
 ### `NODE_PENDING_DEPRECATION=1`
@@ -516,7 +527,7 @@ added: v3.0.0
 
 Path to the file used to store the persistent REPL history. The default path is
 `~/.node_repl_history`, which is overridden by this variable. Setting the value
-to an empty string (`""` or `" "`) disables persistent REPL history.
+to an empty string (`''` or `' '`) disables persistent REPL history.
 
 
 ### `NODE_EXTRA_CA_CERTS=file`
@@ -601,7 +612,7 @@ reason any of these APIs takes a long time, other (seemingly unrelated) APIs
 that run in libuv's threadpool will experience degraded performance. In order to
 mitigate this issue, one potential solution is to increase the size of libuv's
 threadpool by setting the `'UV_THREADPOOL_SIZE'` environment variable to a value
-greater than `4` (its current default value).  For more information, see the
+greater than `4` (its current default value). For more information, see the
 [libuv threadpool documentation][].
 
 [`--openssl-config`]: #cli_openssl_config_file

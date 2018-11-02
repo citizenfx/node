@@ -2301,6 +2301,7 @@ namespace {
 // objects.  This avoids a double lookup in the cases where we know we will
 // add the hash to the JSObject if it does not already exist.
 Object* GetSimpleHash(Object* object) {
+  DisallowHeapAllocation no_gc;
   // The object is either a Smi, a HeapNumber, a name, an odd-ball, a real JS
   // object, or a Harmony proxy.
   if (object->IsSmi()) {
@@ -2333,10 +2334,10 @@ Object* GetSimpleHash(Object* object) {
 }  // namespace
 
 Object* Object::GetHash() {
+  DisallowHeapAllocation no_gc;
   Object* hash = GetSimpleHash(this);
   if (hash->IsSmi()) return hash;
 
-  DisallowHeapAllocation no_gc;
   DCHECK(IsJSReceiver());
   JSReceiver* receiver = JSReceiver::cast(this);
   Isolate* isolate = receiver->GetIsolate();
@@ -2345,10 +2346,12 @@ Object* Object::GetHash() {
 
 // static
 Smi* Object::GetOrCreateHash(Isolate* isolate, Object* key) {
+  DisallowHeapAllocation no_gc;
   return key->GetOrCreateHash(isolate);
 }
 
 Smi* Object::GetOrCreateHash(Isolate* isolate) {
+  DisallowHeapAllocation no_gc;
   Object* hash = GetSimpleHash(this);
   if (hash->IsSmi()) return Smi::cast(hash);
 
@@ -6266,26 +6269,27 @@ Handle<SeededNumberDictionary> JSObject::NormalizeElements(
 
 namespace {
 
-Object* SetHashAndUpdateProperties(HeapObject* properties, int masked_hash) {
-  DCHECK_NE(PropertyArray::kNoHashSentinel, masked_hash);
-  DCHECK_EQ(masked_hash & JSReceiver::kHashMask, masked_hash);
+Object* SetHashAndUpdateProperties(HeapObject* properties, int hash) {
+  DCHECK_NE(PropertyArray::kNoHashSentinel, hash);
+  DCHECK(PropertyArray::HashField::is_valid(hash));
 
   if (properties == properties->GetHeap()->empty_fixed_array() ||
       properties == properties->GetHeap()->empty_property_dictionary()) {
-    return Smi::FromInt(masked_hash);
+    return Smi::FromInt(hash);
   }
 
   if (properties->IsPropertyArray()) {
-    PropertyArray::cast(properties)->SetHash(masked_hash);
+    PropertyArray::cast(properties)->SetHash(hash);
     return properties;
   }
 
   DCHECK(properties->IsDictionary());
-  NameDictionary::cast(properties)->SetHash(masked_hash);
+  NameDictionary::cast(properties)->SetHash(hash);
   return properties;
 }
 
 int GetIdentityHashHelper(Isolate* isolate, JSReceiver* object) {
+  DisallowHeapAllocation no_gc;
   Object* properties = object->raw_properties_or_hash();
   if (properties->IsSmi()) {
     return Smi::ToInt(properties);
@@ -6311,17 +6315,19 @@ int GetIdentityHashHelper(Isolate* isolate, JSReceiver* object) {
 }
 }  // namespace
 
-void JSReceiver::SetIdentityHash(int masked_hash) {
-  DCHECK_NE(PropertyArray::kNoHashSentinel, masked_hash);
-  DCHECK_EQ(masked_hash & JSReceiver::kHashMask, masked_hash);
+void JSReceiver::SetIdentityHash(int hash) {
+  DisallowHeapAllocation no_gc;
+  DCHECK_NE(PropertyArray::kNoHashSentinel, hash);
+  DCHECK(PropertyArray::HashField::is_valid(hash));
 
   HeapObject* existing_properties = HeapObject::cast(raw_properties_or_hash());
   Object* new_properties =
-      SetHashAndUpdateProperties(existing_properties, masked_hash);
+      SetHashAndUpdateProperties(existing_properties, hash);
   set_raw_properties_or_hash(new_properties);
 }
 
 void JSReceiver::SetProperties(HeapObject* properties) {
+  DisallowHeapAllocation no_gc;
   Isolate* isolate = properties->GetIsolate();
   int hash = GetIdentityHashHelper(isolate, this);
   Object* new_properties = properties;
@@ -6337,6 +6343,7 @@ void JSReceiver::SetProperties(HeapObject* properties) {
 
 template <typename ProxyType>
 Smi* GetOrCreateIdentityHashHelper(Isolate* isolate, ProxyType* proxy) {
+  DisallowHeapAllocation no_gc;
   Object* maybe_hash = proxy->hash();
   if (maybe_hash->IsSmi()) return Smi::cast(maybe_hash);
 
@@ -6346,6 +6353,7 @@ Smi* GetOrCreateIdentityHashHelper(Isolate* isolate, ProxyType* proxy) {
 }
 
 Object* JSObject::GetIdentityHash(Isolate* isolate) {
+  DisallowHeapAllocation no_gc;
   if (IsJSGlobalProxy()) {
     return JSGlobalProxy::cast(this)->hash();
   }
@@ -6359,6 +6367,7 @@ Object* JSObject::GetIdentityHash(Isolate* isolate) {
 }
 
 Smi* JSObject::GetOrCreateIdentityHash(Isolate* isolate) {
+  DisallowHeapAllocation no_gc;
   if (IsJSGlobalProxy()) {
     return GetOrCreateIdentityHashHelper(isolate, JSGlobalProxy::cast(this));
   }
@@ -6368,16 +6377,11 @@ Smi* JSObject::GetOrCreateIdentityHash(Isolate* isolate) {
     return Smi::cast(hash_obj);
   }
 
-  int masked_hash;
-  // TODO(gsathya): Remove the loop and pass kHashMask directly to
-  // GenerateIdentityHash.
-  do {
-    int hash = isolate->GenerateIdentityHash(Smi::kMaxValue);
-    masked_hash = hash & JSReceiver::kHashMask;
-  } while (masked_hash == PropertyArray::kNoHashSentinel);
+  int hash = isolate->GenerateIdentityHash(PropertyArray::HashField::kMax);
+  DCHECK_NE(PropertyArray::kNoHashSentinel, hash);
 
-  SetIdentityHash(masked_hash);
-  return Smi::FromInt(masked_hash);
+  SetIdentityHash(hash);
+  return Smi::FromInt(hash);
 }
 
 Object* JSProxy::GetIdentityHash() { return hash(); }
@@ -13052,14 +13056,19 @@ MaybeHandle<Map> JSFunction::GetDerivedMap(Isolate* isolate,
                           constructor_initial_map->unused_property_fields();
       int instance_size;
       int in_object_properties;
-      CalculateInstanceSizeForDerivedClass(function, instance_type,
-                                           embedder_fields, &instance_size,
-                                           &in_object_properties);
+      bool success = CalculateInstanceSizeForDerivedClass(
+          function, instance_type, embedder_fields, &instance_size,
+          &in_object_properties);
 
       int unused_property_fields = in_object_properties - pre_allocated;
-      Handle<Map> map =
-          Map::CopyInitialMap(constructor_initial_map, instance_size,
-                              in_object_properties, unused_property_fields);
+
+      Handle<Map> map;
+      if (success) {
+        map = Map::CopyInitialMap(constructor_initial_map, instance_size,
+                                  in_object_properties, unused_property_fields);
+      } else {
+        map = Map::CopyInitialMap(constructor_initial_map);
+      }
       map->set_new_target_is_base(false);
 
       JSFunction::SetInitialMap(function, map, prototype);
@@ -13785,12 +13794,14 @@ void JSFunction::CalculateInstanceSizeHelper(InstanceType instance_type,
                           requested_embedder_fields;
 }
 
-void JSFunction::CalculateInstanceSizeForDerivedClass(
+// static
+bool JSFunction::CalculateInstanceSizeForDerivedClass(
     Handle<JSFunction> function, InstanceType instance_type,
     int requested_embedder_fields, int* instance_size,
     int* in_object_properties) {
   Isolate* isolate = function->GetIsolate();
   int expected_nof_properties = 0;
+  bool result = true;
   for (PrototypeIterator iter(isolate, function, kStartAtReceiver);
        !iter.IsAtEnd(); iter.Advance()) {
     Handle<JSReceiver> current =
@@ -13804,6 +13815,11 @@ void JSFunction::CalculateInstanceSizeForDerivedClass(
         Compiler::Compile(func, Compiler::CLEAR_EXCEPTION)) {
       DCHECK(shared->is_compiled());
       expected_nof_properties += shared->expected_nof_properties();
+    } else if (!shared->is_compiled()) {
+      // In case there was a compilation error for the constructor we will
+      // throw an error during instantiation. Hence we directly return 0;
+      result = false;
+      break;
     }
     if (!IsDerivedConstructor(shared->kind())) {
       break;
@@ -13812,6 +13828,7 @@ void JSFunction::CalculateInstanceSizeForDerivedClass(
   CalculateInstanceSizeHelper(instance_type, requested_embedder_fields,
                               expected_nof_properties, instance_size,
                               in_object_properties);
+  return result;
 }
 
 

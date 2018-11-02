@@ -6,6 +6,8 @@ const fs = require('fs');
 const net = require('net');
 const providers = Object.assign({}, process.binding('async_wrap').Providers);
 const fixtures = require('../common/fixtures');
+const tmpdir = require('../common/tmpdir');
+const { getSystemErrorName } = require('util');
 
 // Make sure that all Providers are tested.
 {
@@ -25,6 +27,7 @@ const fixtures = require('../common/fixtures');
     delete providers.HTTP2SESSION;
     delete providers.HTTP2STREAM;
     delete providers.HTTP2PING;
+    delete providers.HTTP2SETTINGS;
 
     const obj_keys = Object.keys(providers);
     if (obj_keys.length > 0)
@@ -145,7 +148,7 @@ if (common.hasCrypto) { // eslint-disable-line crypto-check
 }
 
 {
-  common.refreshTmpDir();
+  tmpdir.refresh();
 
   const server = net.createServer(common.mustCall((socket) => {
     server.close();
@@ -212,7 +215,7 @@ if (common.hasCrypto) { // eslint-disable-line crypto-check
       // Use a long string to make sure the write happens asynchronously.
       const err = handle.writeLatin1String(wreq, 'hi'.repeat(100000));
       if (err)
-        throw new Error(`write failed: ${process.binding('uv').errname(err)}`);
+        throw new Error(`write failed: ${getSystemErrorName(err)}`);
       testInitialized(wreq, 'WriteWrap');
     });
     req.address = common.localhostIPv4;
@@ -277,9 +280,11 @@ if (common.hasCrypto) { // eslint-disable-line crypto-check
   testInitialized(handle, 'UDP');
   testUninitialized(req, 'SendWrap');
 
-  handle.bind('0.0.0.0', common.PORT, undefined);
+  handle.bind('0.0.0.0', 0, undefined);
+  const addr = {};
+  handle.getsockname(addr);
   req.address = '127.0.0.1';
-  req.port = common.PORT;
+  req.port = addr.port;
   req.oncomplete = () => handle.close();
   handle.send(req, [Buffer.alloc(1)], 1, req.port, req.address, true);
   testInitialized(req, 'SendWrap');

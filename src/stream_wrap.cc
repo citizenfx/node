@@ -92,7 +92,6 @@ LibuvStreamWrap::LibuvStreamWrap(Environment* env,
                  provider),
       StreamBase(env),
       stream_(stream) {
-  set_after_write_cb({ OnAfterWriteImpl, this });
   set_alloc_cb({ OnAllocImpl, this });
   set_read_cb({ OnReadImpl, this });
 }
@@ -176,7 +175,7 @@ void LibuvStreamWrap::OnAlloc(uv_handle_t* handle,
 
   CHECK_EQ(wrap->stream(), reinterpret_cast<uv_stream_t*>(handle));
 
-  return static_cast<StreamBase*>(wrap)->OnAlloc(suggested_size, buf);
+  return wrap->EmitAlloc(suggested_size, buf);
 }
 
 
@@ -280,7 +279,7 @@ void LibuvStreamWrap::OnRead(uv_stream_t* handle,
     }
   }
 
-  static_cast<StreamBase*>(wrap)->OnRead(nread, buf, type);
+  wrap->EmitRead(nread, buf, type);
 }
 
 
@@ -309,13 +308,13 @@ void LibuvStreamWrap::SetBlocking(const FunctionCallbackInfo<Value>& args) {
 
 int LibuvStreamWrap::DoShutdown(ShutdownWrap* req_wrap) {
   int err;
-  err = uv_shutdown(req_wrap->req(), stream(), AfterShutdown);
+  err = uv_shutdown(req_wrap->req(), stream(), AfterUvShutdown);
   req_wrap->Dispatched();
   return err;
 }
 
 
-void LibuvStreamWrap::AfterShutdown(uv_shutdown_t* req, int status) {
+void LibuvStreamWrap::AfterUvShutdown(uv_shutdown_t* req, int status) {
   ShutdownWrap* req_wrap = ShutdownWrap::from_req(req);
   CHECK_NE(req_wrap, nullptr);
   v8::Locker locker(req_wrap->env()->isolate());
@@ -372,9 +371,9 @@ int LibuvStreamWrap::DoWrite(WriteWrap* w,
                         uv_stream_t* send_handle) {
   int r;
   if (send_handle == nullptr) {
-    r = uv_write(w->req(), stream(), bufs, count, AfterWrite);
+    r = uv_write(w->req(), stream(), bufs, count, AfterUvWrite);
   } else {
-    r = uv_write2(w->req(), stream(), bufs, count, send_handle, AfterWrite);
+    r = uv_write2(w->req(), stream(), bufs, count, send_handle, AfterUvWrite);
   }
 
   if (!r) {
@@ -395,7 +394,7 @@ int LibuvStreamWrap::DoWrite(WriteWrap* w,
 }
 
 
-void LibuvStreamWrap::AfterWrite(uv_write_t* req, int status) {
+void LibuvStreamWrap::AfterUvWrite(uv_write_t* req, int status) {
   WriteWrap* req_wrap = WriteWrap::from_req(req);
   CHECK_NE(req_wrap, nullptr);
   v8::Locker locker(req_wrap->env()->isolate());
@@ -406,9 +405,9 @@ void LibuvStreamWrap::AfterWrite(uv_write_t* req, int status) {
 }
 
 
-void LibuvStreamWrap::OnAfterWriteImpl(WriteWrap* w, void* ctx) {
-  LibuvStreamWrap* wrap = static_cast<LibuvStreamWrap*>(ctx);
-  wrap->UpdateWriteQueueSize();
+void LibuvStreamWrap::AfterWrite(WriteWrap* w, int status) {
+  StreamBase::AfterWrite(w, status);
+  UpdateWriteQueueSize();
 }
 
 }  // namespace node

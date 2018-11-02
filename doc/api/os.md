@@ -225,7 +225,7 @@ The `os.loadavg()` method returns an array containing the 1, 5, and 15 minute
 load averages.
 
 The load average is a measure of system activity, calculated by the operating
-system and expressed as a fractional number.  As a rule of thumb, the load
+system and expressed as a fractional number. As a rule of thumb, the load
 average should ideally be less than the number of logical CPUs in the system.
 
 The load average is a UNIX-specific concept with no real equivalent on
@@ -324,7 +324,7 @@ Equivalent to [`process.platform`][].
 
 *Note*: The value `'android'` may also be returned if the Node.js is built on
 the Android operating system. However, Android support in Node.js is considered
-to be experimental at this time.
+[to be experimental][Android building] at this time.
 
 ## os.release()
 <!-- YAML
@@ -400,11 +400,11 @@ added: v6.0.0
 * `options` {Object}
   * `encoding` {string} Character encoding used to interpret resulting strings.
     If `encoding` is set to `'buffer'`, the `username`, `shell`, and `homedir`
-    values will be `Buffer` instances. **Default:** `'utf8'`
+    values will be `Buffer` instances. **Default:** `'utf8'`.
 * Returns: {Object}
 
 The `os.userInfo()` method returns information about the currently effective
-user -- on POSIX platforms, this is typically a subset of the password file. The
+user — on POSIX platforms, this is typically a subset of the password file. The
 returned object includes the `username`, `uid`, `gid`, `shell`, and `homedir`.
 On Windows, the `uid` and `gid` fields are `-1`, and `shell` is `null`.
 
@@ -1185,4 +1185,5 @@ The following error codes are specific to the Windows operating system:
 
 [`process.arch`]: process.html#process_process_arch
 [`process.platform`]: process.html#process_process_platform
+[Android building]: https://github.com/nodejs/node/blob/master/BUILDING.md#androidandroid-based-devices-eg-firefox-os
 [uname(3)]: https://linux.die.net/man/3/uname

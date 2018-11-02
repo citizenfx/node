@@ -129,7 +129,7 @@ RetainedObjectInfo* WrapperInfo(uint16_t class_id, Local<Value> wrapper) {
   CHECK_GT(object->InternalFieldCount(), 0);
 
   AsyncWrap* wrap = Unwrap<AsyncWrap>(object);
-  CHECK_NE(nullptr, wrap);
+  if (wrap == nullptr) return nullptr;  // ClearWrap() already called.
 
   return new RetainedAsyncInfo(class_id, wrap);
 }
@@ -265,7 +265,7 @@ class PromiseWrap : public AsyncWrap {
   size_t self_size() const override { return sizeof(*this); }
 
   static constexpr int kPromiseField = 1;
-  static constexpr int kParentAsyncIdField = 2;
+  static constexpr int kIsChainedPromiseField = 2;
   static constexpr int kInternalFieldCount = 3;
 
   static PromiseWrap* New(Environment* env,
@@ -274,8 +274,8 @@ class PromiseWrap : public AsyncWrap {
                           bool silent);
   static void GetPromise(Local<String> property,
                          const PropertyCallbackInfo<Value>& info);
-  static void getParentAsyncId(Local<String> property,
-                          const PropertyCallbackInfo<Value>& info);
+  static void getIsChainedPromise(Local<String> property,
+                                  const PropertyCallbackInfo<Value>& info);
 };
 
 PromiseWrap* PromiseWrap::New(Environment* env,
@@ -285,11 +285,10 @@ PromiseWrap* PromiseWrap::New(Environment* env,
   Local<Object> object = env->promise_wrap_template()
                             ->NewInstance(env->context()).ToLocalChecked();
   object->SetInternalField(PromiseWrap::kPromiseField, promise);
-  if (parent_wrap != nullptr) {
-    object->SetInternalField(PromiseWrap::kParentAsyncIdField,
-                             Number::New(env->isolate(),
-                                         parent_wrap->get_async_id()));
-  }
+  object->SetInternalField(PromiseWrap::kIsChainedPromiseField,
+                           parent_wrap != nullptr ?
+                              v8::True(env->isolate()) :
+                              v8::False(env->isolate()));
   CHECK_EQ(promise->GetAlignedPointerFromInternalField(0), nullptr);
   promise->SetInternalField(0, object);
   return new PromiseWrap(env, object, silent);
@@ -300,10 +299,10 @@ void PromiseWrap::GetPromise(Local<String> property,
   info.GetReturnValue().Set(info.Holder()->GetInternalField(kPromiseField));
 }
 
-void PromiseWrap::getParentAsyncId(Local<String> property,
-                              const PropertyCallbackInfo<Value>& info) {
+void PromiseWrap::getIsChainedPromise(Local<String> property,
+                                      const PropertyCallbackInfo<Value>& info) {
   info.GetReturnValue().Set(
-    info.Holder()->GetInternalField(kParentAsyncIdField));
+    info.Holder()->GetInternalField(kIsChainedPromiseField));
 }
 
 static void PromiseHook(PromiseHookType type, Local<Promise> promise,
@@ -335,8 +334,7 @@ static void PromiseHook(PromiseHookType type, Local<Promise> promise,
         parent_wrap = PromiseWrap::New(env, parent_promise, nullptr, true);
       }
 
-      AsyncHooks::DefaultTriggerAsyncIdScope trigger_scope(
-        env, parent_wrap->get_async_id());
+      AsyncHooks::DefaultTriggerAsyncIdScope trigger_scope(parent_wrap);
       wrap = PromiseWrap::New(env, promise, parent_wrap, silent);
     } else {
       wrap = PromiseWrap::New(env, promise, nullptr, silent);
@@ -355,7 +353,7 @@ static void PromiseHook(PromiseHookType type, Local<Promise> promise,
     if (env->execution_async_id() == wrap->get_async_id()) {
       // This condition might not be true if async_hooks was enabled during
       // the promise callback execution.
-      // Popping it off the stack can be skipped in that case, because is is
+      // Popping it off the stack can be skipped in that case, because it is
       // known that it would correspond to exactly one call with
       // PromiseHookType::kBefore that was not witnessed by the PromiseHook.
       env->async_hooks()->pop_async_id(wrap->get_async_id());
@@ -403,8 +401,8 @@ static void SetupHooks(const FunctionCallbackInfo<Value>& args) {
         FIXED_ONE_BYTE_STRING(env->isolate(), "promise"),
         PromiseWrap::GetPromise);
     promise_wrap_template->SetAccessor(
-        FIXED_ONE_BYTE_STRING(env->isolate(), "parentId"),
-        PromiseWrap::getParentAsyncId);
+        FIXED_ONE_BYTE_STRING(env->isolate(), "isChainedPromise"),
+        PromiseWrap::getIsChainedPromise);
     env->set_promise_wrap_template(promise_wrap_template);
   }
 }
@@ -558,12 +556,12 @@ void AsyncWrap::Initialize(Local<Object> target,
   // this way to allow JS and C++ to read/write each value as quickly as
   // possible. The fields are represented as follows:
   //
-  // kAsyncUid: Maintains the state of the next unique id to be assigned.
+  // kAsyncIdCounter: Maintains the state of the next unique id to be assigned.
   //
   // kDefaultTriggerAsyncId: Write the id of the resource responsible for a
   //   handle's creation just before calling the new handle's constructor.
   //   After the new handle is constructed kDefaultTriggerAsyncId is set back
-  //   to 0.
+  //   to -1.
   FORCE_SET_TARGET_FIELD(target,
                          "async_id_fields",
                          env->async_hooks()->async_id_fields().GetJSArray());

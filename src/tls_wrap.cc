@@ -230,11 +230,11 @@ void TLSWrap::Receive(const FunctionCallbackInfo<Value>& args) {
 
   // Copy given buffer entirely or partiall if handle becomes closed
   while (len > 0 && wrap->IsAlive() && !wrap->IsClosing()) {
-    wrap->stream_->OnAlloc(len, &buf);
+    wrap->stream_->EmitAlloc(len, &buf);
     size_t copy = buf.len > len ? len : buf.len;
     memcpy(buf.base, data, copy);
     buf.len = copy;
-    wrap->stream_->OnRead(buf.len, &buf);
+    wrap->stream_->EmitRead(buf.len, &buf);
 
     data += copy;
     len -= copy;
@@ -328,8 +328,7 @@ void TLSWrap::EncOut() {
           ->NewInstance(env()->context()).ToLocalChecked();
   WriteWrap* write_req = WriteWrap::New(env(),
                                         req_wrap_obj,
-                                        this,
-                                        EncOutCb);
+                                        stream_);
 
   uv_buf_t buf[arraysize(data)];
   for (size_t i = 0; i < count; i++)
@@ -346,34 +345,31 @@ void TLSWrap::EncOut() {
 }
 
 
-void TLSWrap::EncOutCb(WriteWrap* req_wrap, int status) {
-  TLSWrap* wrap = req_wrap->wrap()->Cast<TLSWrap>();
-  req_wrap->Dispose();
-
+void TLSWrap::EncOutAfterWrite(WriteWrap* req_wrap, int status) {
   // We should not be getting here after `DestroySSL`, because all queued writes
   // must be invoked with UV_ECANCELED
-  CHECK_NE(wrap->ssl_, nullptr);
+  CHECK_NE(ssl_, nullptr);
 
   // Handle error
   if (status) {
     // Ignore errors after shutdown
-    if (wrap->shutdown_)
+    if (shutdown_)
       return;
 
     // Notify about error
-    wrap->InvokeQueued(status);
+    InvokeQueued(status);
     return;
   }
 
   // Commit
-  crypto::NodeBIO::FromBIO(wrap->enc_out_)->Read(nullptr, wrap->write_size_);
+  crypto::NodeBIO::FromBIO(enc_out_)->Read(nullptr, write_size_);
 
   // Ensure that the progress will be made and `InvokeQueued` will be called.
-  wrap->ClearIn();
+  ClearIn();
 
   // Try writing more data
-  wrap->write_size_ = 0;
-  wrap->EncOut();
+  write_size_ = 0;
+  EncOut();
 }
 
 
@@ -447,11 +443,11 @@ void TLSWrap::ClearOut() {
       int avail = read;
 
       uv_buf_t buf;
-      OnAlloc(avail, &buf);
+      EmitAlloc(avail, &buf);
       if (static_cast<int>(buf.len) < avail)
         avail = buf.len;
       memcpy(buf.base, current, avail);
-      OnRead(avail, &buf);
+      EmitRead(avail, &buf);
 
       // Caveat emptor: OnRead() calls into JS land which can result in
       // the SSL context object being destroyed.  We have to carefully
@@ -467,7 +463,7 @@ void TLSWrap::ClearOut() {
   int flags = SSL_get_shutdown(ssl_);
   if (!eof_ && flags & SSL_RECEIVED_SHUTDOWN) {
     eof_ = true;
-    OnRead(UV_EOF, nullptr);
+    EmitRead(UV_EOF, nullptr);
   }
 
   // We need to check whether an error occurred or the connection was
@@ -681,9 +677,9 @@ int TLSWrap::DoWrite(WriteWrap* w,
 }
 
 
-void TLSWrap::OnAfterWriteImpl(WriteWrap* w, void* ctx) {
+void TLSWrap::OnAfterWriteImpl(WriteWrap* w, int status, void* ctx) {
   TLSWrap* wrap = static_cast<TLSWrap*>(ctx);
-  wrap->UpdateWriteQueueSize();
+  wrap->EncOutAfterWrite(w, status);
 }
 
 
@@ -748,13 +744,13 @@ void TLSWrap::DoRead(ssize_t nread,
       eof_ = true;
     }
 
-    OnRead(nread, nullptr);
+    EmitRead(nread, nullptr);
     return;
   }
 
   // Only client connections can receive data
   if (ssl_ == nullptr) {
-    OnRead(UV_EPROTO, nullptr);
+    EmitRead(UV_EPROTO, nullptr);
     return;
   }
 

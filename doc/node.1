@@ -37,9 +37,9 @@ node \- Server-side JavaScript runtime
 .RI [ script.js \ |
 .B -e
 .RI \&" script \&"
-.R |
+.RI |
 .B -
-.R ]
+.RI ]
 .B [--]
 .RI [ arguments ]
 .br
@@ -165,6 +165,11 @@ Enables the collection of trace event tracing information.
 .BR \-\-trace\-event\-categories " " \fIcategories\fR
 A comma separated list of categories that should be traced when trace event
 tracing is enabled using \fB--trace-events-enabled\fR.
+
+.TP
+.BR \-\-trace-event\-file\-pattern " " \fIpattern\fR
+Template string specifying the filepath for the trace event data, it
+supports \fB${rotation}\fR and \fB${pid}\fR.
 
 .TP
 .BR \-\-zero\-fill\-buffers

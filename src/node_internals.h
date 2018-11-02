@@ -218,6 +218,11 @@ void GetSockOrPeerName(const v8::FunctionCallbackInfo<v8::Value>& args) {
   args.GetReturnValue().Set(err);
 }
 
+void FatalException(v8::Isolate* isolate,
+                    v8::Local<v8::Value> error,
+                    v8::Local<v8::Message> message);
+
+
 void SignalExit(int signo);
 #ifdef __POSIX__
 void RegisterSignalHandler(int signal,
@@ -257,6 +262,8 @@ void ProcessEmitWarning(Environment* env, const char* fmt, ...);
 
 void FillStatsArray(double* fields, const uv_stat_t* s);
 
+void SetupBootstrapObject(Environment* env,
+                          v8::Local<v8::Object> bootstrapper);
 void SetupProcessObject(Environment* env,
                         int argc,
                         const char* const* argv,
@@ -324,6 +331,19 @@ v8::MaybeLocal<v8::Object> New(Environment* env,
 // because ArrayBufferAllocator::Free() deallocates it again with free().
 // Mixing operator new and free() is undefined behavior so don't do that.
 v8::MaybeLocal<v8::Object> New(Environment* env, char* data, size_t length);
+
+inline
+v8::MaybeLocal<v8::Uint8Array> New(Environment* env,
+                                   v8::Local<v8::ArrayBuffer> ab,
+                                   size_t byte_offset,
+                                   size_t length) {
+  v8::Local<v8::Uint8Array> ui = v8::Uint8Array::New(ab, byte_offset, length);
+  v8::Maybe<bool> mb =
+      ui->SetPrototype(env->context(), env->buffer_prototype_object());
+  if (mb.IsNothing())
+    return v8::MaybeLocal<v8::Uint8Array>();
+  return ui;
+}
 
 // Construct a Buffer from a MaybeStackBuffer (and also its subclasses like
 // Utf8Value and TwoByteValue).
@@ -394,6 +414,38 @@ class InternalCallbackScope {
 
 #define NODE_MODULE_CONTEXT_AWARE_INTERNAL(modname, regfunc)                  \
   NODE_MODULE_CONTEXT_AWARE_CPP(modname, regfunc, nullptr, NM_F_INTERNAL)
+
+// Functions defined in node.cc that are exposed via the bootstrapper object
+
+extern double prog_start_time;
+void PrintErrorString(const char* format, ...);
+
+void Abort(const v8::FunctionCallbackInfo<v8::Value>& args);
+void Chdir(const v8::FunctionCallbackInfo<v8::Value>& args);
+void CPUUsage(const v8::FunctionCallbackInfo<v8::Value>& args);
+void Cwd(const v8::FunctionCallbackInfo<v8::Value>& args);
+void Hrtime(const v8::FunctionCallbackInfo<v8::Value>& args);
+void Kill(const v8::FunctionCallbackInfo<v8::Value>& args);
+void MemoryUsage(const v8::FunctionCallbackInfo<v8::Value>& args);
+void RawDebug(const v8::FunctionCallbackInfo<v8::Value>& args);
+void StartProfilerIdleNotifier(const v8::FunctionCallbackInfo<v8::Value>& args);
+void StopProfilerIdleNotifier(const v8::FunctionCallbackInfo<v8::Value>& args);
+void Umask(const v8::FunctionCallbackInfo<v8::Value>& args);
+void Uptime(const v8::FunctionCallbackInfo<v8::Value>& args);
+
+#if defined(__POSIX__) && !defined(__ANDROID__) && !defined(__CloudABI__)
+void SetGid(const v8::FunctionCallbackInfo<v8::Value>& args);
+void SetEGid(const v8::FunctionCallbackInfo<v8::Value>& args);
+void SetUid(const v8::FunctionCallbackInfo<v8::Value>& args);
+void SetEUid(const v8::FunctionCallbackInfo<v8::Value>& args);
+void SetGroups(const v8::FunctionCallbackInfo<v8::Value>& args);
+void InitGroups(const v8::FunctionCallbackInfo<v8::Value>& args);
+void GetUid(const v8::FunctionCallbackInfo<v8::Value>& args);
+void GetGid(const v8::FunctionCallbackInfo<v8::Value>& args);
+void GetEUid(const v8::FunctionCallbackInfo<v8::Value>& args);
+void GetEGid(const v8::FunctionCallbackInfo<v8::Value>& args);
+void GetGroups(const v8::FunctionCallbackInfo<v8::Value>& args);
+#endif  // __POSIX__ && !defined(__ANDROID__) && !defined(__CloudABI__)
 
 }  // namespace node
 

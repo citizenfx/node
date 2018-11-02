@@ -8,33 +8,61 @@ const h2 = require('http2');
 
 const server = h2.createServer();
 server.on('stream', (stream) => {
+  stream.on('close', common.mustCall());
   stream.respond();
   stream.end('ok');
 });
 
-server.listen(0);
-
-server.on('listening', common.mustCall(() => {
-
+server.listen(0, common.mustCall(() => {
   const client = h2.connect(`http://localhost:${server.address().port}`);
+  const req = client.request();
+  const closeCode = 1;
 
-  const req = client.request({ ':path': '/' });
-  req.rstStream(0);
+  common.expectsError(
+    () => req.close(2 ** 32),
+    {
+      type: RangeError,
+      code: 'ERR_OUT_OF_RANGE',
+      message: 'The "code" argument is out of range'
+    }
+  );
+  assert.strictEqual(req.closed, false);
+
+  [true, 1, {}, [], null, 'test'].forEach((notFunction) => {
+    common.expectsError(
+      () => req.close(closeCode, notFunction),
+      {
+        type: TypeError,
+        code: 'ERR_INVALID_CALLBACK',
+        message: 'callback must be a function'
+      }
+    );
+    assert.strictEqual(req.closed, false);
+  });
+
+  req.close(closeCode, common.mustCall());
+  assert.strictEqual(req.closed, true);
 
   // make sure that destroy is called
   req._destroy = common.mustCall(req._destroy.bind(req));
 
-  // second call doesn't do anything
-  assert.doesNotThrow(() => req.rstStream(8));
+  // Second call doesn't do anything.
+  req.close(closeCode + 1);
 
   req.on('close', common.mustCall((code) => {
     assert.strictEqual(req.destroyed, true);
-    assert.strictEqual(code, 0);
+    assert.strictEqual(code, closeCode);
     server.close();
-    client.destroy();
+    client.close();
   }));
 
-  req.on('response', common.mustNotCall());
+  req.on('error', common.expectsError({
+    code: 'ERR_HTTP2_STREAM_ERROR',
+    type: Error,
+    message: 'Stream closed with error code NGHTTP2_PROTOCOL_ERROR'
+  }));
+
+  req.on('response', common.mustCall());
   req.resume();
   req.on('end', common.mustCall());
   req.end();

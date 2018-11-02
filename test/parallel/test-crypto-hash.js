@@ -82,15 +82,15 @@ assert.deepStrictEqual(
 );
 
 // stream interface should produce the same result.
-assert.deepStrictEqual(a5, a3, 'stream interface is consistent');
-assert.deepStrictEqual(a6, a3, 'stream interface is consistent');
-assert.notStrictEqual(a7, undefined, 'no data should return data');
-assert.notStrictEqual(a8, undefined, 'empty string should generate data');
+assert.deepStrictEqual(a5, a3);
+assert.deepStrictEqual(a6, a3);
+assert.notStrictEqual(a7, undefined);
+assert.notStrictEqual(a8, undefined);
 
 // Test multiple updates to same hash
 const h1 = crypto.createHash('sha1').update('Test123').digest('hex');
 const h2 = crypto.createHash('sha1').update('Test').update('123').digest('hex');
-assert.strictEqual(h1, h2, 'multipled updates');
+assert.strictEqual(h1, h2);
 
 // Test hashing for binary files
 const fn = fixtures.path('sample.png');
@@ -105,7 +105,8 @@ fileStream.on('close', common.mustCall(function() {
                      'Test SHA1 of sample.png');
 }));
 
-// Issue #2227: unknown digest method should throw an error.
+// Issue https://github.com/nodejs/node-v0.x-archive/issues/2227: unknown digest
+// method should throw an error.
 assert.throws(function() {
   crypto.createHash('xyzzy');
 }, /Digest method not supported/);
