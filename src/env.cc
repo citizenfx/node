@@ -148,6 +148,8 @@ Environment::~Environment() {
   delete[] heap_statistics_buffer_;
   delete[] heap_space_statistics_buffer_;
   delete[] http_parser_buffer_;
+
+  context_.Reset();
 }
 
 void Environment::Start(int argc,
