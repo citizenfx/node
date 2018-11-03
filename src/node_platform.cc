@@ -3,12 +3,15 @@
 
 #include "env.h"
 #include "env-inl.h"
-#include "debug_utils.h"
 #include "util.h"
 #include <algorithm>
 
-namespace v8::base::OS {
-  double TimeCurrentMillis();
+namespace v8::base {
+  class OS
+  {
+  public:
+    static double TimeCurrentMillis();
+  };
 }
 
 namespace node {
@@ -24,8 +27,6 @@ using v8::TracingController;
 namespace {
 
 static void PlatformWorkerThread(void* data) {
-  TRACE_EVENT_METADATA1("__metadata", "thread_name", "name",
-                        "PlatformWorkerThread");
   TaskQueue<Task>* pending_worker_tasks = static_cast<TaskQueue<Task>*>(data);
   while (std::unique_ptr<Task> task = pending_worker_tasks->BlockingPop()) {
     task->Run();
@@ -65,8 +66,6 @@ class WorkerThreadsTaskRunner::DelayedTaskScheduler {
 
  private:
   void Run() {
-    TRACE_EVENT_METADATA1("__metadata", "thread_name", "name",
-                          "WorkerThreadsTaskRunner::DelayedTaskScheduler");
     loop_.data = this;
     CHECK_EQ(0, uv_loop_init(&loop_));
     flush_tasks_.data = this;
@@ -74,7 +73,7 @@ class WorkerThreadsTaskRunner::DelayedTaskScheduler {
     uv_sem_post(&ready_);
 
     uv_run(&loop_, UV_RUN_DEFAULT);
-    CheckedUvLoopClose(&loop_);
+    uv_loop_close(&loop_);
   }
 
   static void FlushTasks(uv_async_t* flush_tasks) {
@@ -426,7 +425,7 @@ double NodePlatform::MonotonicallyIncreasingTime() {
 }
 
 double NodePlatform::CurrentClockTimeMillis() {
-  return SystemClockTimeMillis();
+  return v8::base::OS::TimeCurrentMillis();
 }
 
 TracingController* NodePlatform::GetTracingController() {

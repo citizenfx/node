@@ -292,7 +292,7 @@ static struct {
 
   void InitializeFake(int thread_pool_size, uv_loop_t* loop) {
     if (trace_enabled) {
-      tracing_agent_.reset(new tracing::Agent());
+      tracing_agent_.reset(new tracing::Agent(trace_file_pattern));
       /*platform_ = new NodePlatform(thread_pool_size, loop,
         tracing_agent_->GetTracingController());
       V8::InitializePlatform(platform_);*/
@@ -4194,7 +4194,7 @@ inline int Start(uv_loop_t* event_loop,
 
   isolate->AddMessageListener(OnMessage);
   isolate->SetAbortOnUncaughtExceptionCallback(ShouldAbortOnUncaughtException);
-  isolate->SetAutorunMicrotasks(false);
+  isolate->SetMicrotasksPolicy(v8::MicrotasksPolicy::kExplicit);
   isolate->SetFatalErrorHandler(OnFatalError);
 
   if (track_heap_objects) {
