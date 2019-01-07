@@ -35,9 +35,6 @@ IsolateData::IsolateData(Isolate* isolate,
     event_loop_(event_loop),
     zero_fill_field_(zero_fill_field),
     platform_(platform) {
-  if (platform_ != nullptr)
-    platform_->RegisterIsolate(this, event_loop);
-
   // Create string and private symbol properties as internalized one byte
   // strings after the platform is properly initialized.
   //

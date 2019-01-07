@@ -143,7 +143,7 @@ class NodePlatform : public MultiIsolatePlatform {
   // flushing.
   bool FlushForegroundTasks(v8::Isolate* isolate);
 
-  void RegisterIsolate(IsolateData* isolate_data, uv_loop_t* loop) override;
+  void RegisterIsolate(v8::Isolate* isolate, uv_loop_t* loop) override;
   void UnregisterIsolate(IsolateData* isolate_data) override;
 
   std::shared_ptr<v8::TaskRunner> GetForegroundTaskRunner(

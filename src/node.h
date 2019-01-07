@@ -225,7 +225,7 @@ class MultiIsolatePlatform : public v8::Platform {
   virtual void CancelPendingDelayedTasks(v8::Isolate* isolate) = 0;
 
   // These will be called by the `IsolateData` creation/destruction functions.
-  virtual void RegisterIsolate(IsolateData* isolate_data,
+  virtual void RegisterIsolate(v8::Isolate* isolate,
                                struct uv_loop_s* loop) = 0;
   virtual void UnregisterIsolate(IsolateData* isolate_data) = 0;
 };

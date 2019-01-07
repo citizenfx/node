@@ -3974,8 +3974,8 @@ void Init(int* argc,
   // Unconditionally force typed arrays to allocate outside the v8 heap. This
   // is to prevent memory pointers from being moved around that are returned by
   // Buffer::Data().
-  const char no_typed_array_heap[] = "--typed_array_max_size_in_heap=0";
-  V8::SetFlagsFromString(no_typed_array_heap, sizeof(no_typed_array_heap) - 1);
+  //const char no_typed_array_heap[] = "--typed_array_max_size_in_heap=0";
+  //V8::SetFlagsFromString(no_typed_array_heap, sizeof(no_typed_array_heap) - 1);
 #endif
 
   v8_platform.InitializeFake(v8_thread_pool_size, uv_default_loop());
@@ -4188,9 +4188,14 @@ inline int Start(uv_loop_t* event_loop,
   params.code_event_handler = vTune::GetVtuneCodeEventHandler();
 #endif
 
-  Isolate* const isolate = Isolate::New(params);
+  Isolate* isolate = Isolate::Allocate();
   if (isolate == nullptr)
     return 12;  // Signal internal error.
+
+  // Register the isolate on the platform before the isolate gets initialized,
+  // so that the isolate can access the platform during initialization.
+  v8_platform.Platform()->RegisterIsolate(isolate, event_loop);
+  Isolate::Initialize(isolate, params);
 
   isolate->AddMessageListener(OnMessage);
   isolate->SetAbortOnUncaughtExceptionCallback(ShouldAbortOnUncaughtException);
