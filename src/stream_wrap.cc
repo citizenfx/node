@@ -211,6 +211,7 @@ int LibuvStreamWrap::ReadStop() {
 
 
 void LibuvStreamWrap::OnUvAlloc(size_t suggested_size, uv_buf_t* buf) {
+  EnvironmentScope env_scope(env());
   HandleScope scope(env()->isolate());
   Context::Scope context_scope(env()->context());
 
@@ -224,6 +225,7 @@ static MaybeLocal<Object> AcceptHandle(Environment* env,
                 std::is_base_of<UDPWrap, WrapType>::value,
                 "Can only accept stream handles");
 
+  EnvironmentScope env_scope(env);
   EscapableHandleScope scope(env->isolate());
   Local<Object> wrap_obj;
 
@@ -243,6 +245,7 @@ static MaybeLocal<Object> AcceptHandle(Environment* env,
 
 
 void LibuvStreamWrap::OnUvRead(ssize_t nread, const uv_buf_t* buf) {
+  EnvironmentScope env_scope(env());
   HandleScope scope(env()->isolate());
   Context::Scope context_scope(env()->context());
   uv_handle_type type = UV_UNKNOWN_HANDLE;
@@ -331,6 +334,7 @@ void LibuvStreamWrap::AfterUvShutdown(uv_shutdown_t* req, int status) {
   LibuvShutdownWrap* req_wrap = static_cast<LibuvShutdownWrap*>(
       LibuvShutdownWrap::from_req(req));
   CHECK_NOT_NULL(req_wrap);
+  EnvironmentScope env_scope(req_wrap->env());
   HandleScope scope(req_wrap->env()->isolate());
   Context::Scope context_scope(req_wrap->env()->context());
   req_wrap->Done(status);
@@ -396,6 +400,7 @@ void LibuvStreamWrap::AfterUvWrite(uv_write_t* req, int status) {
   LibuvWriteWrap* req_wrap = static_cast<LibuvWriteWrap*>(
       LibuvWriteWrap::from_req(req));
   CHECK_NOT_NULL(req_wrap);
+  EnvironmentScope env_scope(req_wrap->env());
   HandleScope scope(req_wrap->env()->isolate());
   Context::Scope context_scope(req_wrap->env()->context());
   req_wrap->Done(status);

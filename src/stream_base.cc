@@ -362,6 +362,7 @@ void StreamBase::AddMethod(Environment* env,
 }
 
 void StreamBase::AddMethods(Environment* env, Local<FunctionTemplate> t) {
+  EnvironmentScope env_scope(env);
   HandleScope scope(env->isolate());
 
   enum PropertyAttribute attributes =
@@ -470,6 +471,7 @@ void EmitToJSStreamListener::OnStreamRead(ssize_t nread, const uv_buf_t& buf_) {
   CHECK_NOT_NULL(stream_);
   StreamBase* stream = static_cast<StreamBase*>(stream_);
   Environment* env = stream->stream_env();
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
   AllocatedBuffer buf(env, buf_);
@@ -498,6 +500,7 @@ void CustomBufferJSListener::OnStreamRead(ssize_t nread, const uv_buf_t& buf) {
 
   StreamBase* stream = static_cast<StreamBase*>(stream_);
   Environment* env = stream->stream_env();
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 
@@ -518,6 +521,7 @@ void ReportWritesToJSStreamListener::OnStreamAfterReqFinished(
   StreamBase* stream = static_cast<StreamBase*>(stream_);
   Environment* env = stream->stream_env();
   AsyncWrap* async_wrap = req_wrap->GetAsyncWrap();
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
   CHECK(!async_wrap->persistent().IsEmpty());

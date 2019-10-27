@@ -44,6 +44,7 @@ using v8::Value;
 
 
 void StatWatcher::Initialize(Environment* env, Local<Object> target) {
+  EnvironmentScope env_scope(env);
   HandleScope scope(env->isolate());
 
   Local<FunctionTemplate> t = env->NewFunctionTemplate(StatWatcher::New);
@@ -78,6 +79,7 @@ void StatWatcher::Callback(uv_fs_poll_t* handle,
                            const uv_stat_t* curr) {
   StatWatcher* wrap = ContainerOf(&StatWatcher::watcher_, handle);
   Environment* env = wrap->env();
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 

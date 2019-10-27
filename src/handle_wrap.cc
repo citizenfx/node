@@ -115,6 +115,7 @@ HandleWrap::HandleWrap(Environment* env,
       state_(kInitialized),
       handle_(handle) {
   handle_->data = this;
+  EnvironmentScope env_scope(env);
   HandleScope scope(env->isolate());
   env->handle_wrap_queue()->PushBack(this);
 }
@@ -123,6 +124,7 @@ HandleWrap::HandleWrap(Environment* env,
 void HandleWrap::OnClose(uv_handle_t* handle) {
   std::unique_ptr<HandleWrap> wrap { static_cast<HandleWrap*>(handle->data) };
   Environment* env = wrap->env();
+  EnvironmentScope env_scope(env);
   HandleScope scope(env->isolate());
   Context::Scope context_scope(env->context());
 

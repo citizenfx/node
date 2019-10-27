@@ -51,6 +51,7 @@ using v8::Value;
 MaybeLocal<Object> PipeWrap::Instantiate(Environment* env,
                                          AsyncWrap* parent,
                                          PipeWrap::SocketType type) {
+  EnvironmentScope env_scope(env);
   EscapableHandleScope handle_scope(env->isolate());
   AsyncHooks::DefaultTriggerAsyncIdScope trigger_scope(parent);
   CHECK_EQ(false, env->pipe_constructor_template().IsEmpty());

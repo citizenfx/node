@@ -70,8 +70,10 @@ void StreamPipe::Unpipe() {
 
   // Delay the JS-facing part with SetImmediate, because this might be from
   // inside the garbage collector, so we can’t run JS here.
+  EnvironmentScope env_scope(env());
   HandleScope handle_scope(env()->isolate());
   env()->SetImmediate([this](Environment* env) {
+    EnvironmentScope env_scope(env);
     HandleScope handle_scope(env->isolate());
     Context::Scope context_scope(env->context());
     Local<Object> object = this->object();

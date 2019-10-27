@@ -96,6 +96,7 @@ class PerIsolatePlatformData :
   typedef std::vector<ShutdownCallback> ShutdownCbList;
   ShutdownCbList shutdown_callbacks_;
 
+  v8::Isolate* const isolate_;
   uv_loop_t* const loop_;
   uv_async_t* flush_tasks_ = nullptr;
   TaskQueue<v8::Task> foreground_tasks_;

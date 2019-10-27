@@ -56,6 +56,7 @@ InternalCallbackScope::InternalCallbackScope(Environment* env,
     return;
   }
 
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   // If you hit this assertion, you forgot to enter the v8::Context first.
   CHECK_EQ(Environment::GetCurrent(env->isolate()), env);
@@ -115,6 +116,7 @@ void InternalCallbackScope::Close() {
     return;
   }
 
+  EnvironmentScope env_scope(env_);
   HandleScope handle_scope(env_->isolate());
   Local<Object> process = env_->process_object();
 

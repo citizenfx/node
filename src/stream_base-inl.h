@@ -147,6 +147,7 @@ inline Environment* StreamBase::stream_env() const {
 inline int StreamBase::Shutdown(v8::Local<v8::Object> req_wrap_obj) {
   Environment* env = stream_env();
 
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
 
   if (req_wrap_obj.IsEmpty()) {
@@ -197,6 +198,7 @@ inline StreamWriteResult StreamBase::Write(
     }
   }
 
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
 
   if (req_wrap_obj.IsEmpty()) {

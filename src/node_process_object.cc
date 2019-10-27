@@ -70,6 +70,7 @@ static void GetParentProcessId(Local<Name> property,
 
 MaybeLocal<Object> CreateProcessObject(Environment* env) {
   Isolate* isolate = env->isolate();
+  EnvironmentScope env_scope(env);
   EscapableHandleScope scope(isolate);
   Local<Context> context = env->context();
 
@@ -81,6 +82,11 @@ MaybeLocal<Object> CreateProcessObject(Environment* env) {
       !process_ctor->NewInstance(context).ToLocal(&process)) {
     return MaybeLocal<Object>();
   }
+
+  // process.isCitizenAltMode
+  READONLY_PROPERTY(process,
+    "isCitizenAltMode",
+    (env->options()->citizen_alt_mode) ? True(env->isolate()) : False(env->isolate()));
 
   // process.version
   READONLY_PROPERTY(process,

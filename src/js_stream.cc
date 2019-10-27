@@ -43,6 +43,7 @@ bool JSStream::IsAlive() {
 
 
 bool JSStream::IsClosing() {
+  EnvironmentScope env_scope(env());
   HandleScope scope(env()->isolate());
   Context::Scope context_scope(env()->context());
   TryCatchScope try_catch(env());
@@ -57,6 +58,7 @@ bool JSStream::IsClosing() {
 
 
 int JSStream::ReadStart() {
+  EnvironmentScope env_scope(env());
   HandleScope scope(env()->isolate());
   Context::Scope context_scope(env()->context());
   TryCatchScope try_catch(env());
@@ -72,6 +74,7 @@ int JSStream::ReadStart() {
 
 
 int JSStream::ReadStop() {
+  EnvironmentScope env_scope(env());
   HandleScope scope(env()->isolate());
   Context::Scope context_scope(env()->context());
   TryCatchScope try_catch(env());
@@ -87,6 +90,7 @@ int JSStream::ReadStop() {
 
 
 int JSStream::DoShutdown(ShutdownWrap* req_wrap) {
+  EnvironmentScope env_scope(env());
   HandleScope scope(env()->isolate());
   Context::Scope context_scope(env()->context());
 
@@ -114,6 +118,7 @@ int JSStream::DoWrite(WriteWrap* w,
                       uv_stream_t* send_handle) {
   CHECK_NULL(send_handle);
 
+  EnvironmentScope env_scope(env());
   HandleScope scope(env()->isolate());
   Context::Scope context_scope(env()->context());
 

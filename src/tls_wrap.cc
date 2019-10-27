@@ -232,6 +232,7 @@ void TLSWrap::SSLInfoCallback(const SSL* ssl_, int where, int ret) {
   SSL* ssl = const_cast<SSL*>(ssl_);
   TLSWrap* c = static_cast<TLSWrap*>(SSL_get_app_data(ssl_));
   Environment* env = c->env();
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
   Local<Object> object = c->object();
@@ -346,6 +347,7 @@ void TLSWrap::EncOut() {
 
   if (!res.async) {
     Debug(this, "Write finished synchronously");
+    EnvironmentScope env_scope(env());
     HandleScope handle_scope(env()->isolate());
 
     // Simulate asynchronous finishing, TLS cannot handle this at the moment.
@@ -396,6 +398,7 @@ void TLSWrap::OnStreamAfterWrite(WriteWrap* req_wrap, int status) {
 
 
 Local<Value> TLSWrap::GetSSLError(int status, int* err, std::string* msg) {
+  EnvironmentScope env_scope(env());
   EscapableHandleScope scope(env()->isolate());
 
   // ssl_ is already destroyed in reading EOF by close notify alert.
@@ -539,6 +542,7 @@ void TLSWrap::ClearOut() {
   // shutdown cleanly (SSL_ERROR_ZERO_RETURN) even when read == 0.
   // See node#1642 and SSL_read(3SSL) for details.
   if (read <= 0) {
+    EnvironmentScope env_scope(env());
     HandleScope handle_scope(env()->isolate());
     int err;
     Local<Value> arg = GetSSLError(read, &err, nullptr);
@@ -592,6 +596,7 @@ void TLSWrap::ClearIn() {
   }
 
   // Error or partial write
+  EnvironmentScope env_scope(env());
   HandleScope handle_scope(env()->isolate());
   Context::Scope context_scope(env()->context());
 
@@ -1032,6 +1037,7 @@ int TLSWrap::SelectSNIContextCallback(SSL* s, int* ad, void* arg) {
   if (servername == nullptr)
     return SSL_TLSEXT_ERR_OK;
 
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 

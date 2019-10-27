@@ -130,6 +130,7 @@ void PerformanceEntry::Notify(Environment* env,
 // Create a User Timing Mark
 void Mark(const FunctionCallbackInfo<Value>& args) {
   Environment* env = Environment::GetCurrent(args);
+  EnvironmentScope env_scope(env);
   HandleScope scope(env->isolate());
   Utf8Value name(env->isolate(), args[0]);
   uint64_t now = PERFORMANCE_NOW();
@@ -169,6 +170,7 @@ inline uint64_t GetPerformanceMark(Environment* env, const std::string& name) {
 // measures the duration between two distinct user timing marks
 void Measure(const FunctionCallbackInfo<Value>& args) {
   Environment* env = Environment::GetCurrent(args);
+  EnvironmentScope env_scope(env);
   HandleScope scope(env->isolate());
   Utf8Value name(env->isolate(), args[0]);
   Utf8Value startMark(env->isolate(), args[1]);
@@ -231,6 +233,7 @@ void SetupPerformanceObservers(const FunctionCallbackInfo<Value>& args) {
 // Creates a GC Performance Entry and passes it to observers
 void PerformanceGCCallback(Environment* env,
                            std::unique_ptr<GCPerformanceEntry> entry) {
+  EnvironmentScope env_scope(env);
   HandleScope scope(env->isolate());
   Local<Context> context = env->context();
 

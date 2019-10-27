@@ -392,6 +392,7 @@ void ThrowCryptoError(Environment* env,
     ERR_error_string_n(err, message_buffer, sizeof(message_buffer));
     message = message_buffer;
   }
+  EnvironmentScope env_scope(env);
   HandleScope scope(env->isolate());
   Local<String> exception_string =
       String::NewFromUtf8(env->isolate(), message, NewStringType::kNormal)
@@ -681,6 +682,7 @@ void SecureContext::Init(const FunctionCallbackInfo<Value>& args) {
 // Takes a string or buffer and loads it into a BIO.
 // Caller responsible for BIO_free_all-ing the returned object.
 static BIOPointer LoadBIO(Environment* env, Local<Value> v) {
+  EnvironmentScope env_scope(env);
   HandleScope scope(env->isolate());
 
   if (v->IsString()) {
@@ -1600,6 +1602,7 @@ int SecureContext::TicketKeyCallback(SSL* ssl,
       SSL_CTX_get_app_data(SSL_get_SSL_CTX(ssl)));
 
   Environment* env = sc->env();
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 
@@ -1746,6 +1749,7 @@ void SecureContext::GetCertificate(const FunctionCallbackInfo<Value>& args) {
 
 template <class Base>
 void SSLWrap<Base>::AddMethods(Environment* env, Local<FunctionTemplate> t) {
+  EnvironmentScope env_scope(env);
   HandleScope scope(env->isolate());
 
   env->SetProtoMethodNoSideEffect(t, "getPeerCertificate", GetPeerCertificate);
@@ -1804,6 +1808,7 @@ template <class Base>
 int SSLWrap<Base>::NewSessionCallback(SSL* s, SSL_SESSION* sess) {
   Base* w = static_cast<Base*>(SSL_get_app_data(s));
   Environment* env = w->ssl_env();
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 
@@ -1844,6 +1849,7 @@ template <class Base>
 void SSLWrap<Base>::KeylogCallback(const SSL* s, const char* line) {
   Base* w = static_cast<Base*>(SSL_get_app_data(s));
   Environment* env = w->ssl_env();
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 
@@ -1860,6 +1866,7 @@ void SSLWrap<Base>::OnClientHello(void* arg,
                                   const ClientHelloParser::ClientHello& hello) {
   Base* w = static_cast<Base*>(arg);
   Environment* env = w->ssl_env();
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Local<Context> context = env->context();
   Context::Scope context_scope(context);
@@ -1971,6 +1978,7 @@ static MaybeLocal<Object> ECPointToBuffer(Environment* env,
 
 
 static Local<Object> X509ToObject(Environment* env, X509* cert) {
+  EnvironmentScope env_scope(env);
   EscapableHandleScope scope(env->isolate());
   Local<Context> context = env->context();
   Local<Object> info = Object::New(env->isolate());
@@ -2793,6 +2801,7 @@ int SSLWrap<Base>::SelectALPNCallback(SSL* s,
                                       void* arg) {
   Base* w = static_cast<Base*>(SSL_get_app_data(s));
   Environment* env = w->env();
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 
@@ -2872,6 +2881,7 @@ template <class Base>
 int SSLWrap<Base>::TLSExtStatusCallback(SSL* s, void* arg) {
   Base* w = static_cast<Base*>(SSL_get_app_data(s));
   Environment* env = w->env();
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
 
   if (w->is_client()) {
@@ -2940,6 +2950,7 @@ int SSLWrap<Base>::SSLCertCallback(SSL* s, void* arg) {
 
   Environment* env = w->env();
   Local<Context> context = env->context();
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(context);
   w->cert_cb_running_ = true;
@@ -4031,6 +4042,7 @@ void CipherBase::Init(const char* cipher_type,
                       const char* key_buf,
                       int key_buf_len,
                       unsigned int auth_tag_len) {
+  EnvironmentScope env_scope(env());
   HandleScope scope(env()->isolate());
   MarkPopErrorOnReturn mark_pop_error_on_return;
 
@@ -4102,6 +4114,7 @@ void CipherBase::InitIv(const char* cipher_type,
                         const unsigned char* iv,
                         int iv_len,
                         unsigned int auth_tag_len) {
+  EnvironmentScope env_scope(env());
   HandleScope scope(env()->isolate());
   MarkPopErrorOnReturn mark_pop_error_on_return;
 
@@ -4605,6 +4618,7 @@ void Hmac::New(const FunctionCallbackInfo<Value>& args) {
 
 
 void Hmac::HmacInit(const char* hash_type, const char* key, int key_len) {
+  EnvironmentScope env_scope(env());
   HandleScope scope(env()->isolate());
 
   const EVP_MD* md = EVP_get_digestbyname(hash_type);
@@ -4887,6 +4901,7 @@ SignBase::Error SignBase::Update(const char* data, int len) {
 
 
 void CheckThrow(Environment* env, SignBase::Error error) {
+  EnvironmentScope env_scope(env);
   HandleScope scope(env->isolate());
 
   switch (error) {
@@ -5801,6 +5816,7 @@ bool DiffieHellman::VerifyContext() {
 
 
 void ECDH::Initialize(Environment* env, Local<Object> target) {
+  EnvironmentScope env_scope(env);
   HandleScope scope(env->isolate());
 
   Local<FunctionTemplate> t = env->NewFunctionTemplate(New);
@@ -6073,6 +6089,7 @@ void CryptoJob::AfterThreadPoolWork(int status) {
   CHECK(status == 0 || status == UV_ECANCELED);
   std::unique_ptr<CryptoJob> job(this);
   if (status == UV_ECANCELED) return;
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
   CHECK_EQ(false, async_wrap->persistent().IsWeak());

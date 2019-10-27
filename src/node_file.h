@@ -304,6 +304,7 @@ class FSReqAfterScope {
  private:
   FSReqBase* wrap_ = nullptr;
   uv_fs_t* req_ = nullptr;
+  EnvironmentScope environment_scope_;
   HandleScope handle_scope_;
   Context::Scope context_scope_;
 };

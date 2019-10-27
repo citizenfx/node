@@ -340,6 +340,7 @@ class Parser : public AsyncWrap, public StreamListener {
 
 
   int on_body(const char* at, size_t length) {
+    EnvironmentScope env_scope(env());
     EscapableHandleScope scope(env()->isolate());
 
     Local<Object> obj = object();
@@ -380,6 +381,7 @@ class Parser : public AsyncWrap, public StreamListener {
 
 
   int on_message_complete() {
+    EnvironmentScope env_scope(env());
     HandleScope scope(env()->isolate());
 
     if (num_fields_)
@@ -596,6 +598,7 @@ class Parser : public AsyncWrap, public StreamListener {
 
 
   void OnStreamRead(ssize_t nread, const uv_buf_t& buf) override {
+    EnvironmentScope env_scope(env());
     HandleScope scope(env()->isolate());
     // Once we’re done here, either indicate that the HTTP parser buffer
     // is free for re-use, or free() the data if it didn’t come from there
@@ -641,6 +644,7 @@ class Parser : public AsyncWrap, public StreamListener {
 
 
   Local<Value> Execute(const char* data, size_t len) {
+    EnvironmentScope env_scope(env());
     EscapableHandleScope scope(env()->isolate());
 
     current_buffer_len_ = len;
@@ -774,6 +778,7 @@ class Parser : public AsyncWrap, public StreamListener {
 
   // spill headers and request path to JS land
   void Flush() {
+    EnvironmentScope env_scope(env());
     HandleScope scope(env()->isolate());
 
     Local<Object> obj = object();

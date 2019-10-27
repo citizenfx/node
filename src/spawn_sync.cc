@@ -431,6 +431,7 @@ Environment* SyncProcessRunner::env() const {
 }
 
 MaybeLocal<Object> SyncProcessRunner::Run(Local<Value> options) {
+  EnvironmentScope env_scope(env());
   EscapableHandleScope scope(env()->isolate());
 
   CHECK_EQ(lifecycle_, kUninitialized);
@@ -666,6 +667,7 @@ void SyncProcessRunner::SetPipeError(int pipe_error) {
 
 
 Local<Object> SyncProcessRunner::BuildResultObject() {
+  EnvironmentScope env_scope(env());
   EscapableHandleScope scope(env()->isolate());
   Local<Context> context = env()->context();
 
@@ -720,6 +722,7 @@ Local<Array> SyncProcessRunner::BuildOutputArray() {
   CHECK_GE(lifecycle_, kInitialized);
   CHECK(!stdio_pipes_.empty());
 
+  EnvironmentScope env_scope(env());
   EscapableHandleScope scope(env()->isolate());
   Local<Context> context = env()->context();
   Local<Array> js_output = Array::New(env()->isolate(), stdio_count_);
@@ -841,6 +844,7 @@ Maybe<int> SyncProcessRunner::ParseOptions(Local<Value> js_value) {
 
 
 int SyncProcessRunner::ParseStdioOptions(Local<Value> js_value) {
+  EnvironmentScope env_scope(env());
   HandleScope scope(env()->isolate());
   Local<Array> js_stdio_options;
 

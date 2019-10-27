@@ -361,6 +361,7 @@ void Worker::JoinThread() {
   on_thread_finished_.Uninstall();
 
   {
+    EnvironmentScope env_scope(env());
     HandleScope handle_scope(env()->isolate());
     Context::Scope context_scope(env()->context());
 

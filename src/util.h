@@ -34,11 +34,11 @@
 #include <cstdlib>
 #include <cstring>
 
+#include <array>
 #include <functional>  // std::function
 #include <limits>
 #include <set>
 #include <string>
-#include <array>
 #include <unordered_map>
 #include <utility>
 
@@ -46,11 +46,11 @@ namespace node {
 
 // Maybe remove kPathSeparator when cpp17 is ready
 #ifdef _WIN32
-    constexpr char kPathSeparator = '\\';
+constexpr char kPathSeparator = '\\';
 /* MAX_PATH is in characters, not bytes. Make sure we have enough headroom. */
 #define PATH_MAX_BYTES (MAX_PATH * 4)
 #else
-    constexpr char kPathSeparator = '/';
+constexpr char kPathSeparator = '/';
 #define PATH_MAX_BYTES (PATH_MAX)
 #endif
 
@@ -108,7 +108,7 @@ struct AssertionInfo {
 void DumpBacktrace(FILE* fp);
 
 // Windows 8+ does not like abort() in Release mode
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(_DEBUG)
 #define ABORT_NO_BACKTRACE() _exit(134)
 #else
 #define ABORT_NO_BACKTRACE() abort()
@@ -116,14 +116,13 @@ void DumpBacktrace(FILE* fp);
 
 #define ABORT() node::Abort()
 
-#define ERROR_AND_ABORT(expr)                                                 \
-  do {                                                                        \
-    /* Make sure that this struct does not end up in inline code, but      */ \
-    /* rather in a read-only data section when modifying this code.        */ \
-    static const node::AssertionInfo args = {                                 \
-      __FILE__ ":" STRINGIFY(__LINE__), #expr, PRETTY_FUNCTION_NAME           \
-    };                                                                        \
-    node::Assert(args);                                                       \
+#define ERROR_AND_ABORT(expr)                                                  \
+  do {                                                                         \
+    /* Make sure that this struct does not end up in inline code, but      */  \
+    /* rather in a read-only data section when modifying this code.        */  \
+    static const node::AssertionInfo args = {                                  \
+        __FILE__ ":" STRINGIFY(__LINE__), #expr, PRETTY_FUNCTION_NAME};        \
+    node::Assert(args);                                                        \
   } while (0)
 
 #ifdef __GNUC__
@@ -139,11 +138,11 @@ void DumpBacktrace(FILE* fp);
 #define STRINGIFY_(x) #x
 #define STRINGIFY(x) STRINGIFY_(x)
 
-#define CHECK(expr)                                                           \
-  do {                                                                        \
-    if (UNLIKELY(!(expr))) {                                                  \
-      ERROR_AND_ABORT(expr);                                                  \
-    }                                                                         \
+#define CHECK(expr)                                                            \
+  do {                                                                         \
+    if (UNLIKELY(!(expr))) {                                                   \
+      ERROR_AND_ABORT(expr);                                                   \
+    }                                                                          \
   } while (0)
 
 #define CHECK_EQ(a, b) CHECK((a) == (b))
@@ -157,31 +156,30 @@ void DumpBacktrace(FILE* fp);
 #define CHECK_IMPLIES(a, b) CHECK(!(a) || (b))
 
 #ifdef DEBUG
-  #define DCHECK(expr) CHECK(expr)
-  #define DCHECK_EQ(a, b) CHECK((a) == (b))
-  #define DCHECK_GE(a, b) CHECK((a) >= (b))
-  #define DCHECK_GT(a, b) CHECK((a) > (b))
-  #define DCHECK_LE(a, b) CHECK((a) <= (b))
-  #define DCHECK_LT(a, b) CHECK((a) < (b))
-  #define DCHECK_NE(a, b) CHECK((a) != (b))
-  #define DCHECK_NULL(val) CHECK((val) == nullptr)
-  #define DCHECK_NOT_NULL(val) CHECK((val) != nullptr)
-  #define DCHECK_IMPLIES(a, b) CHECK(!(a) || (b))
+#define DCHECK(expr) CHECK(expr)
+#define DCHECK_EQ(a, b) CHECK((a) == (b))
+#define DCHECK_GE(a, b) CHECK((a) >= (b))
+#define DCHECK_GT(a, b) CHECK((a) > (b))
+#define DCHECK_LE(a, b) CHECK((a) <= (b))
+#define DCHECK_LT(a, b) CHECK((a) < (b))
+#define DCHECK_NE(a, b) CHECK((a) != (b))
+#define DCHECK_NULL(val) CHECK((val) == nullptr)
+#define DCHECK_NOT_NULL(val) CHECK((val) != nullptr)
+#define DCHECK_IMPLIES(a, b) CHECK(!(a) || (b))
 #else
-  #define DCHECK(expr)
-  #define DCHECK_EQ(a, b)
-  #define DCHECK_GE(a, b)
-  #define DCHECK_GT(a, b)
-  #define DCHECK_LE(a, b)
-  #define DCHECK_LT(a, b)
-  #define DCHECK_NE(a, b)
-  #define DCHECK_NULL(val)
-  #define DCHECK_NOT_NULL(val)
-  #define DCHECK_IMPLIES(a, b)
+#define DCHECK(expr)
+#define DCHECK_EQ(a, b)
+#define DCHECK_GE(a, b)
+#define DCHECK_GT(a, b)
+#define DCHECK_LE(a, b)
+#define DCHECK_LT(a, b)
+#define DCHECK_NE(a, b)
+#define DCHECK_NULL(val)
+#define DCHECK_NOT_NULL(val)
+#define DCHECK_IMPLIES(a, b)
 #endif
 
-
-#define UNREACHABLE(...)                                                      \
+#define UNREACHABLE(...)                                                       \
   ERROR_AND_ABORT("Unreachable code reached" __VA_OPT__(": ") __VA_ARGS__)
 
 // TAILQ-style intrusive list node.
@@ -189,7 +187,7 @@ template <typename T>
 class ListNode;
 
 // TAILQ-style intrusive list head.
-template <typename T, ListNode<T> (T::*M)>
+template <typename T, ListNode<T>(T::*M)>
 class ListHead;
 
 template <typename T>
@@ -204,13 +202,14 @@ class ListNode {
   ListNode& operator=(const ListNode&) = delete;
 
  private:
-  template <typename U, ListNode<U> (U::*M)> friend class ListHead;
+  template <typename U, ListNode<U>(U::*M)>
+  friend class ListHead;
   friend int GenDebugSymbols();
   ListNode* prev_;
   ListNode* next_;
 };
 
-template <typename T, ListNode<T> (T::*M)>
+template <typename T, ListNode<T>(T::*M)>
 class ListHead {
  public:
   class Iterator {
@@ -249,6 +248,7 @@ class ContainerOfHelper {
   inline ContainerOfHelper(Inner Outer::*field, Inner* pointer);
   template <typename TypeName>
   inline operator TypeName*() const;
+
  private:
   Outer* const pointer_;
 };
@@ -275,20 +275,16 @@ inline v8::Local<v8::String> OneByteString(v8::Isolate* isolate,
 
 // Used to be a macro, hence the uppercase name.
 template <int N>
-inline v8::Local<v8::String> FIXED_ONE_BYTE_STRING(
-    v8::Isolate* isolate,
-    const char(&data)[N]) {
+inline v8::Local<v8::String> FIXED_ONE_BYTE_STRING(v8::Isolate* isolate,
+                                                   const char (&data)[N]) {
   return OneByteString(isolate, data, N - 1);
 }
 
 template <std::size_t N>
 inline v8::Local<v8::String> FIXED_ONE_BYTE_STRING(
-    v8::Isolate* isolate,
-    const std::array<char, N>& arr) {
+    v8::Isolate* isolate, const std::array<char, N>& arr) {
   return OneByteString(isolate, arr.data(), N - 1);
 }
-
-
 
 // Swaps bytes in place. nbytes is the number of bytes to swap and must be a
 // multiple of the word size (checked by function).
@@ -315,22 +311,14 @@ inline bool StringEqualNoCaseN(const char* a, const char* b, size_t length);
 template <typename T, size_t kStackStorageSize = 1024>
 class MaybeStackBuffer {
  public:
-  const T* out() const {
-    return buf_;
-  }
+  const T* out() const { return buf_; }
 
-  T* out() {
-    return buf_;
-  }
+  T* out() { return buf_; }
 
   // operator* for compatibility with `v8::String::(Utf8)Value`
-  T* operator*() {
-    return buf_;
-  }
+  T* operator*() { return buf_; }
 
-  const T* operator*() const {
-    return buf_;
-  }
+  const T* operator*() const { return buf_; }
 
   T& operator[](size_t index) {
     CHECK_LT(index, length());
@@ -342,15 +330,12 @@ class MaybeStackBuffer {
     return buf_[index];
   }
 
-  size_t length() const {
-    return length_;
-  }
+  size_t length() const { return length_; }
 
   // Current maximum capacity of the buffer with which SetLength() can be used
   // without first calling AllocateSufficientStorage().
   size_t capacity() const {
-    return IsAllocated() ? capacity_ :
-                           IsInvalidated() ? 0 : kStackStorageSize;
+    return IsAllocated() ? capacity_ : IsInvalidated() ? 0 : kStackStorageSize;
   }
 
   // Make sure enough space for `storage` entries is available.
@@ -397,14 +382,10 @@ class MaybeStackBuffer {
   }
 
   // If the buffer is stored in the heap rather than on the stack.
-  bool IsAllocated() const {
-    return !IsInvalidated() && buf_ != buf_st_;
-  }
+  bool IsAllocated() const { return !IsInvalidated() && buf_ != buf_st_; }
 
   // If Invalidate() has been called.
-  bool IsInvalidated() const {
-    return buf_ == nullptr;
-  }
+  bool IsInvalidated() const { return buf_ == nullptr; }
 
   // Release ownership of the malloc'd buffer.
   // Note: This does not free the buffer.
@@ -425,8 +406,7 @@ class MaybeStackBuffer {
   }
 
   ~MaybeStackBuffer() {
-    if (IsAllocated())
-      free(buf_);
+    if (IsAllocated()) free(buf_);
   }
 
  private:
@@ -474,20 +454,20 @@ class BufferValue : public MaybeStackBuffer<char> {
   explicit BufferValue(v8::Isolate* isolate, v8::Local<v8::Value> value);
 };
 
-#define SPREAD_BUFFER_ARG(val, name)                                          \
-  CHECK((val)->IsArrayBufferView());                                          \
-  v8::Local<v8::ArrayBufferView> name = (val).As<v8::ArrayBufferView>();      \
-  v8::ArrayBuffer::Contents name##_c = name->Buffer()->GetContents();         \
-  const size_t name##_offset = name->ByteOffset();                            \
-  const size_t name##_length = name->ByteLength();                            \
-  char* const name##_data =                                                   \
-      static_cast<char*>(name##_c.Data()) + name##_offset;                    \
-  if (name##_length > 0)                                                      \
-    CHECK_NE(name##_data, nullptr);
+#define SPREAD_BUFFER_ARG(val, name)                                           \
+  CHECK((val)->IsArrayBufferView());                                           \
+  v8::Local<v8::ArrayBufferView> name = (val).As<v8::ArrayBufferView>();       \
+  v8::ArrayBuffer::Contents name##_c = name->Buffer()->GetContents();          \
+  const size_t name##_offset = name->ByteOffset();                             \
+  const size_t name##_length = name->ByteLength();                             \
+  char* const name##_data =                                                    \
+      static_cast<char*>(name##_c.Data()) + name##_offset;                     \
+  if (name##_length > 0) CHECK_NE(name##_data, nullptr);
 
 // Use this when a variable or parameter is unused in order to explicitly
 // silence a compiler warning about that.
-template <typename T> inline void USE(T&&) {}
+template <typename T>
+inline void USE(T&&) {}
 
 // Run a function when exiting the current scope.
 struct OnScopeLeave {
@@ -524,11 +504,9 @@ struct MallocedBuffer {
   }
   MallocedBuffer& operator=(MallocedBuffer&& other) {
     this->~MallocedBuffer();
-    return *new(this) MallocedBuffer(std::move(other));
+    return *new (this) MallocedBuffer(std::move(other));
   }
-  ~MallocedBuffer() {
-    free(data);
-  }
+  ~MallocedBuffer() { free(data); }
   MallocedBuffer(const MallocedBuffer&) = delete;
   MallocedBuffer& operator=(const MallocedBuffer&) = delete;
 };
@@ -538,12 +516,9 @@ class NonCopyableMaybe {
  public:
   NonCopyableMaybe() : empty_(true) {}
   explicit NonCopyableMaybe(T&& value)
-      : empty_(false),
-        value_(std::move(value)) {}
+      : empty_(false), value_(std::move(value)) {}
 
-  bool IsEmpty() const {
-    return empty_;
-  }
+  bool IsEmpty() const { return empty_; }
 
   T&& Release() {
     CHECK_EQ(empty_, false);
@@ -558,12 +533,14 @@ class NonCopyableMaybe {
 
 // Test whether some value can be called with ().
 template <typename T, typename = void>
-struct is_callable : std::is_function<T> { };
+struct is_callable : std::is_function<T> {};
 
 template <typename T>
-struct is_callable<T, typename std::enable_if<
-    std::is_same<decltype(void(&T::operator())), void>::value
-    >::type> : std::true_type { };
+struct is_callable<
+    T,
+    typename std::enable_if<
+        std::is_same<decltype(void(&T::operator())), void>::value>::type>
+    : std::true_type {};
 
 template <typename T, void (*function)(T*)>
 struct FunctionDeleter {
@@ -579,8 +556,9 @@ std::vector<std::string> SplitString(const std::string& in, char delim);
 inline v8::MaybeLocal<v8::Value> ToV8Value(v8::Local<v8::Context> context,
                                            const std::string& str,
                                            v8::Isolate* isolate = nullptr);
-template <typename T, typename test_for_number =
-    typename std::enable_if<std::numeric_limits<T>::is_specialized, bool>::type>
+template <typename T,
+          typename test_for_number = typename std::
+              enable_if<std::numeric_limits<T>::is_specialized, bool>::type>
 inline v8::MaybeLocal<v8::Value> ToV8Value(v8::Local<v8::Context> context,
                                            const T& number,
                                            v8::Isolate* isolate = nullptr);
@@ -695,8 +673,7 @@ class PersistentToLocal {
   // reference to the object.
   template <class TypeName>
   static inline v8::Local<TypeName> Default(
-      v8::Isolate* isolate,
-      const v8::PersistentBase<TypeName>& persistent) {
+      v8::Isolate* isolate, const v8::PersistentBase<TypeName>& persistent) {
     if (persistent.IsWeak()) {
       return PersistentToLocal::Weak(isolate, persistent);
     } else {
@@ -718,8 +695,7 @@ class PersistentToLocal {
 
   template <class TypeName>
   static inline v8::Local<TypeName> Weak(
-      v8::Isolate* isolate,
-      const v8::PersistentBase<TypeName>& persistent) {
+      v8::Isolate* isolate, const v8::PersistentBase<TypeName>& persistent) {
     return v8::Local<TypeName>::New(isolate, persistent);
   }
 };

@@ -99,6 +99,7 @@ void AsyncWrap::DestroyAsyncIdsCallback(Environment* env) {
     for (auto async_id : destroy_async_id_list) {
       // Want each callback to be cleaned up after itself, instead of cleaning
       // them all up after the while() loop completes.
+      EnvironmentScope env_scope(env);
       HandleScope scope(env->isolate());
       Local<Value> async_id_value = Number::New(env->isolate(), async_id);
       MaybeLocal<Value> ret = fn->Call(
@@ -117,6 +118,7 @@ void Emit(Environment* env, double async_id, AsyncHooks::Fields type,
   if (async_hooks->fields()[type] == 0 || !env->can_call_into_js())
     return;
 
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Local<Value> async_id_value = Number::New(env->isolate(), async_id);
   TryCatchScope try_catch(env, TryCatchScope::CatchMode::kFatal);
@@ -462,6 +464,7 @@ void AsyncWrap::Initialize(Local<Object> target,
                            void* priv) {
   Environment* env = Environment::GetCurrent(context);
   Isolate* isolate = env->isolate();
+  EnvironmentScope env_scope(env);
   HandleScope scope(isolate);
 
   env->SetMethod(target, "setupHooks", SetupHooks);
@@ -715,6 +718,7 @@ void AsyncWrap::EmitAsyncInit(Environment* env,
     return;
   }
 
+  EnvironmentScope env_scope(env);
   HandleScope scope(env->isolate());
   Local<Function> init_fn = env->async_hooks_init_function();
 
@@ -761,6 +765,7 @@ Local<Object> AsyncWrap::GetOwner() {
 }
 
 Local<Object> AsyncWrap::GetOwner(Environment* env, Local<Object> obj) {
+  EnvironmentScope env_scope(env);
   EscapableHandleScope handle_scope(env->isolate());
   CHECK(!obj.IsEmpty());
 

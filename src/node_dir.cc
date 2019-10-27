@@ -110,6 +110,7 @@ inline void DirHandle::GCClose() {
       // it is being thrown from within the SetImmediate handler and
       // there is no JS stack to bubble it to. In other words, tearing
       // down the process is the only reasonable thing we can do here.
+      EnvironmentScope env_scope(env);
       HandleScope handle_scope(env->isolate());
       env->ThrowUVException(detail.ret, "close", msg);
     });

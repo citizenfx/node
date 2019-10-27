@@ -49,8 +49,8 @@ using v8::Value;
 using worker::Worker;
 
 int const Environment::kNodeContextTag = 0x6e6f64;
-void* const Environment::kNodeContextTagPtr = const_cast<void*>(
-    static_cast<const void*>(&Environment::kNodeContextTag));
+void* const Environment::kNodeContextTagPtr =
+    const_cast<void*>(static_cast<const void*>(&Environment::kNodeContextTag));
 
 std::vector<size_t> IsolateData::Serialize(SnapshotCreator* creator) {
   Isolate* isolate = creator->GetIsolate();
@@ -218,10 +218,10 @@ void TrackingTraceStateObserver::UpdateTraceCategoryState() {
                                  TRACING_CATEGORY_NODE1(async_hooks)))) != 0;
 
   Isolate* isolate = env_->isolate();
+  EnvironmentScope env_scope(env_);
   HandleScope handle_scope(isolate);
   Local<Function> cb = env_->trace_category_state_function();
-  if (cb.IsEmpty())
-    return;
+  if (cb.IsEmpty()) return;
   TryCatchScope try_catch(env_);
   try_catch.SetVerbose(true);
   Local<Value> args[] = {Boolean::New(isolate, async_hooks_enabled)};
@@ -236,6 +236,7 @@ uint64_t Environment::AllocateThreadId() {
 }
 
 void Environment::CreateProperties() {
+  EnvironmentScope env_scope(this);
   HandleScope handle_scope(isolate_);
   Local<Context> ctx = context();
   Local<FunctionTemplate> templ = FunctionTemplate::New(isolate());
@@ -276,8 +277,7 @@ std::string GetExecPath(const std::vector<std::string>& argv) {
 #if defined(__OpenBSD__)
   uv_fs_t req;
   req.ptr = nullptr;
-  if (0 ==
-      uv_fs_realpath(nullptr, &req, exec_path.c_str(), nullptr)) {
+  if (0 == uv_fs_realpath(nullptr, &req, exec_path.c_str(), nullptr)) {
     CHECK_NOT_NULL(req.ptr);
     exec_path = std::string(static_cast<char*>(req.ptr));
   }
@@ -345,13 +345,11 @@ Environment::Environment(IsolateData* isolate_data,
 
   performance_state_ =
       std::make_unique<performance::performance_state>(isolate());
-  performance_state_->Mark(
-      performance::NODE_PERFORMANCE_MILESTONE_ENVIRONMENT);
+  performance_state_->Mark(performance::NODE_PERFORMANCE_MILESTONE_ENVIRONMENT);
   performance_state_->Mark(performance::NODE_PERFORMANCE_MILESTONE_NODE_START,
                            per_process::node_start_time);
-  performance_state_->Mark(
-      performance::NODE_PERFORMANCE_MILESTONE_V8_START,
-      performance::performance_v8_start);
+  performance_state_->Mark(performance::NODE_PERFORMANCE_MILESTONE_V8_START,
+                           performance::performance_v8_start);
 
   if (*TRACE_EVENT_API_GET_CATEGORY_GROUP_ENABLED(
           TRACING_CATEGORY_NODE1(environment)) != 0) {
@@ -393,6 +391,7 @@ Environment::~Environment() {
   // CleanupHandles() should have removed all of them.
   CHECK(file_handle_read_wrap_freelist_.empty());
 
+  EnvironmentScope env_scope(this);
   HandleScope handle_scope(isolate());
 
 #if HAVE_INSPECTOR
@@ -401,8 +400,8 @@ Environment::~Environment() {
   inspector_agent_.reset();
 #endif
 
-  context()->SetAlignedPointerInEmbedderData(
-      ContextEmbedderIndex::kEnvironment, nullptr);
+  context()->SetAlignedPointerInEmbedderData(ContextEmbedderIndex::kEnvironment,
+                                             nullptr);
 
   if (trace_state_observer_) {
     tracing::AgentWriterHandle* writer = GetTracingAgentWriter();
@@ -417,7 +416,7 @@ Environment::~Environment() {
   delete[] heap_code_statistics_buffer_;
 
   TRACE_EVENT_NESTABLE_ASYNC_END0(
-    TRACING_CATEGORY_NODE1(environment), "Environment", this);
+      TRACING_CATEGORY_NODE1(environment), "Environment", this);
 
   // Do not unload addons on the main thread. Some addons need to retain memory
   // beyond the Environment's lifetime, and unloading them early would break
@@ -433,6 +432,7 @@ Environment::~Environment() {
 }
 
 void Environment::InitializeLibuv(bool start_profiler_idle_notifier) {
+  EnvironmentScope env_scope(this);
   HandleScope handle_scope(isolate());
   Context::Scope context_scope(context());
 
@@ -461,10 +461,10 @@ void Environment::InitializeLibuv(bool start_profiler_idle_notifier) {
   uv_unref(reinterpret_cast<uv_handle_t*>(&idle_check_handle_));
 
   thread_stopper()->Install(
-    this, static_cast<void*>(this), [](uv_async_t* handle) {
-      Environment* env = static_cast<Environment*>(handle->data);
-      uv_stop(env->event_loop());
-    });
+      this, static_cast<void*>(this), [](uv_async_t* handle) {
+        Environment* env = static_cast<Environment*>(handle->data);
+        uv_stop(env->event_loop());
+      });
   thread_stopper()->set_stopped(false);
   uv_unref(reinterpret_cast<uv_handle_t*>(thread_stopper()->GetHandle()));
 
@@ -490,52 +490,45 @@ void Environment::ExitEnv() {
 }
 
 void Environment::RegisterHandleCleanups() {
-  HandleCleanupCb close_and_finish = [](Environment* env, uv_handle_t* handle,
-                                        void* arg) {
-    handle->data = env;
+  HandleCleanupCb close_and_finish =
+      [](Environment* env, uv_handle_t* handle, void* arg) {
+        handle->data = env;
 
-    env->CloseHandle(handle, [](uv_handle_t* handle) {
+        env->CloseHandle(handle, [](uv_handle_t* handle) {
 #ifdef DEBUG
-      memset(handle, 0xab, uv_handle_size(handle->type));
+          memset(handle, 0xab, uv_handle_size(handle->type));
 #endif
-    });
-  };
+        });
+      };
 
-  RegisterHandleCleanup(
-      reinterpret_cast<uv_handle_t*>(timer_handle()),
-      close_and_finish,
-      nullptr);
+  RegisterHandleCleanup(reinterpret_cast<uv_handle_t*>(timer_handle()),
+                        close_and_finish,
+                        nullptr);
   RegisterHandleCleanup(
       reinterpret_cast<uv_handle_t*>(immediate_check_handle()),
       close_and_finish,
       nullptr);
-  RegisterHandleCleanup(
-      reinterpret_cast<uv_handle_t*>(immediate_idle_handle()),
-      close_and_finish,
-      nullptr);
-  RegisterHandleCleanup(
-      reinterpret_cast<uv_handle_t*>(&idle_prepare_handle_),
-      close_and_finish,
-      nullptr);
-  RegisterHandleCleanup(
-      reinterpret_cast<uv_handle_t*>(&idle_check_handle_),
-      close_and_finish,
-      nullptr);
+  RegisterHandleCleanup(reinterpret_cast<uv_handle_t*>(immediate_idle_handle()),
+                        close_and_finish,
+                        nullptr);
+  RegisterHandleCleanup(reinterpret_cast<uv_handle_t*>(&idle_prepare_handle_),
+                        close_and_finish,
+                        nullptr);
+  RegisterHandleCleanup(reinterpret_cast<uv_handle_t*>(&idle_check_handle_),
+                        close_and_finish,
+                        nullptr);
 }
 
 void Environment::CleanupHandles() {
-  for (ReqWrapBase* request : req_wrap_queue_)
-    request->Cancel();
+  for (ReqWrapBase* request : req_wrap_queue_) request->Cancel();
 
-  for (HandleWrap* handle : handle_wrap_queue_)
-    handle->Close();
+  for (HandleWrap* handle : handle_wrap_queue_) handle->Close();
 
   for (HandleCleanup& hc : handle_cleanup_queue_)
     hc.cb_(this, hc.handle_, hc.arg_);
   handle_cleanup_queue_.clear();
 
-  while (handle_cleanup_waiting_ != 0 ||
-         request_waiting_ != 0 ||
+  while (handle_cleanup_waiting_ != 0 || request_waiting_ != 0 ||
          !handle_wrap_queue_.IsEmpty()) {
     uv_run(event_loop(), UV_RUN_ONCE);
   }
@@ -544,8 +537,7 @@ void Environment::CleanupHandles() {
 }
 
 void Environment::StartProfilerIdleNotifier() {
-  if (profiler_idle_notifier_started_)
-    return;
+  if (profiler_idle_notifier_started_) return;
 
   profiler_idle_notifier_started_ = true;
 
@@ -569,6 +561,7 @@ void Environment::StopProfilerIdleNotifier() {
 void Environment::PrintSyncTrace() const {
   if (!trace_sync_io_) return;
 
+  EnvironmentScope env_scope(this);
   HandleScope handle_scope(isolate());
 
   fprintf(
@@ -580,24 +573,25 @@ void Environment::PrintSyncTrace() const {
 
 void Environment::RunCleanup() {
   started_cleanup_ = true;
-  TraceEventScope trace_scope(TRACING_CATEGORY_NODE1(environment),
-                              "RunCleanup", this);
+  TraceEventScope trace_scope(
+      TRACING_CATEGORY_NODE1(environment), "RunCleanup", this);
   thread_stopper()->Uninstall();
   CleanupHandles();
 
   while (!cleanup_hooks_.empty()) {
     // Copy into a vector, since we can't sort an unordered_set in-place.
-    std::vector<CleanupHookCallback> callbacks(
-        cleanup_hooks_.begin(), cleanup_hooks_.end());
+    std::vector<CleanupHookCallback> callbacks(cleanup_hooks_.begin(),
+                                               cleanup_hooks_.end());
     // We can't erase the copied elements from `cleanup_hooks_` yet, because we
     // need to be able to check whether they were un-scheduled by another hook.
 
-    std::sort(callbacks.begin(), callbacks.end(),
+    std::sort(callbacks.begin(),
+              callbacks.end(),
               [](const CleanupHookCallback& a, const CleanupHookCallback& b) {
-      // Sort in descending order so that the most recently inserted callbacks
-      // are run first.
-      return a.insertion_order_counter_ > b.insertion_order_counter_;
-    });
+                // Sort in descending order so that the most recently inserted
+                // callbacks are run first.
+                return a.insertion_order_counter_ > b.insertion_order_counter_;
+              });
 
     for (const CleanupHookCallback& cb : callbacks) {
       if (cleanup_hooks_.count(cb) == 0) {
@@ -614,8 +608,8 @@ void Environment::RunCleanup() {
 }
 
 void Environment::RunBeforeExitCallbacks() {
-  TraceEventScope trace_scope(TRACING_CATEGORY_NODE1(environment),
-                              "BeforeExit", this);
+  TraceEventScope trace_scope(
+      TRACING_CATEGORY_NODE1(environment), "BeforeExit", this);
   for (ExitCallback before_exit : before_exit_functions_) {
     before_exit.cb_(before_exit.arg_);
   }
@@ -627,8 +621,8 @@ void Environment::BeforeExit(void (*cb)(void* arg), void* arg) {
 }
 
 void Environment::RunAtExitCallbacks() {
-  TraceEventScope trace_scope(TRACING_CATEGORY_NODE1(environment),
-                              "AtExit", this);
+  TraceEventScope trace_scope(
+      TRACING_CATEGORY_NODE1(environment), "AtExit", this);
   for (ExitCallback at_exit : at_exit_functions_) {
     at_exit.cb_(at_exit.arg_);
   }
@@ -640,8 +634,8 @@ void Environment::AtExit(void (*cb)(void* arg), void* arg) {
 }
 
 void Environment::RunAndClearNativeImmediates() {
-  TraceEventScope trace_scope(TRACING_CATEGORY_NODE1(environment),
-                              "RunAndClearNativeImmediates", this);
+  TraceEventScope trace_scope(
+      TRACING_CATEGORY_NODE1(environment), "RunAndClearNativeImmediates", this);
   size_t ref_count = 0;
   size_t count = 0;
   std::unique_ptr<NativeImmediateCallback> head;
@@ -653,8 +647,7 @@ void Environment::RunAndClearNativeImmediates() {
     for (; head; head = head->get_next()) {
       DebugSealHandleScope seal_handle_scope(isolate());
       count++;
-      if (head->is_refed())
-        ref_count++;
+      if (head->is_refed()) ref_count++;
 
       head->Call(this);
       if (UNLIKELY(try_catch.HasCaught())) {
@@ -669,13 +662,13 @@ void Environment::RunAndClearNativeImmediates() {
     }
     return false;
   };
-  while (head && drain_list()) {}
+  while (head && drain_list()) {
+  }
 
   DCHECK_GE(immediate_info()->count(), count);
   immediate_info()->count_dec(count);
   immediate_info()->ref_count_dec(ref_count);
 }
-
 
 void Environment::ScheduleTimer(int64_t duration_ms) {
   if (started_cleanup_) return;
@@ -694,12 +687,12 @@ void Environment::ToggleTimerRef(bool ref) {
 
 void Environment::RunTimers(uv_timer_t* handle) {
   Environment* env = Environment::from_timer_handle(handle);
-  TraceEventScope trace_scope(TRACING_CATEGORY_NODE1(environment),
-                              "RunTimers", env);
+  TraceEventScope trace_scope(
+      TRACING_CATEGORY_NODE1(environment), "RunTimers", env);
 
-  if (!env->can_call_into_js())
-    return;
+  if (!env->can_call_into_js()) return;
 
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 
@@ -723,8 +716,7 @@ void Environment::RunTimers(uv_timer_t* handle) {
   // code becomes invalid and needs to be rewritten. Otherwise catastrophic
   // timers corruption will occur and all timers behaviour will become
   // entirely unpredictable.
-  if (ret.IsEmpty())
-    return;
+  if (ret.IsEmpty()) return;
 
   // To allow for less JS-C++ boundary crossing, the value returned from JS
   // serves a few purposes:
@@ -753,22 +745,20 @@ void Environment::RunTimers(uv_timer_t* handle) {
   }
 }
 
-
 void Environment::CheckImmediate(uv_check_t* handle) {
   Environment* env = Environment::from_immediate_check_handle(handle);
-  TraceEventScope trace_scope(TRACING_CATEGORY_NODE1(environment),
-                              "CheckImmediate", env);
+  TraceEventScope trace_scope(
+      TRACING_CATEGORY_NODE1(environment), "CheckImmediate", env);
 
-  if (env->immediate_info()->count() == 0)
-    return;
+  if (env->immediate_info()->count() == 0) return;
 
+  EnvironmentScope env_scope(env);
   HandleScope scope(env->isolate());
   Context::Scope context_scope(env->context());
 
   env->RunAndClearNativeImmediates();
 
-  if (!env->can_call_into_js())
-    return;
+  if (!env->can_call_into_js()) return;
 
   do {
     MakeCallback(env->isolate(),
@@ -776,11 +766,11 @@ void Environment::CheckImmediate(uv_check_t* handle) {
                  env->immediate_callback_function(),
                  0,
                  nullptr,
-                 {0, 0}).ToLocalChecked();
+                 {0, 0})
+        .ToLocalChecked();
   } while (env->immediate_info()->has_outstanding() && env->can_call_into_js());
 
-  if (env->immediate_info()->ref_count() == 0)
-    env->ToggleImmediateRef(false);
+  if (env->immediate_info()->ref_count() == 0) env->ToggleImmediateRef(false);
 }
 
 void Environment::ToggleImmediateRef(bool ref) {
@@ -788,12 +778,11 @@ void Environment::ToggleImmediateRef(bool ref) {
 
   if (ref) {
     // Idle handle is needed only to stop the event loop from blocking in poll.
-    uv_idle_start(immediate_idle_handle(), [](uv_idle_t*){ });
+    uv_idle_start(immediate_idle_handle(), [](uv_idle_t*) {});
   } else {
     uv_idle_stop(immediate_idle_handle());
   }
 }
-
 
 Local<Value> Environment::GetNow() {
   uv_update_time(event_loop());
@@ -812,18 +801,17 @@ void Environment::set_debug_categories(const std::string& cats, bool enabled) {
     std::string::size_type comma_pos = debug_categories.find(',');
     std::string wanted = ToLower(debug_categories.substr(0, comma_pos));
 
-#define V(name)                                                          \
-    {                                                                    \
-      static const std::string available_category = ToLower(#name);      \
-      if (available_category.find(wanted) != std::string::npos)          \
-        set_debug_enabled(DebugCategory::name, enabled);                 \
-    }
+#define V(name)                                                                \
+  {                                                                            \
+    static const std::string available_category = ToLower(#name);              \
+    if (available_category.find(wanted) != std::string::npos)                  \
+      set_debug_enabled(DebugCategory::name, enabled);                         \
+  }
 
     DEBUG_CATEGORY_NAMES(V)
 #undef V
 
-    if (comma_pos == std::string::npos)
-      break;
+    if (comma_pos == std::string::npos) break;
     // Use everything after the `,` as the list for the next iteration.
     debug_categories = debug_categories.substr(comma_pos + 1);
   }
@@ -839,33 +827,40 @@ void CollectExceptionInfo(Environment* env,
                           const char* dest) {
   obj->Set(env->context(),
            env->errno_string(),
-           Integer::New(env->isolate(), errorno)).Check();
+           Integer::New(env->isolate(), errorno))
+      .Check();
 
-  obj->Set(env->context(), env->code_string(),
-           OneByteString(env->isolate(), err_string)).Check();
+  obj->Set(env->context(),
+           env->code_string(),
+           OneByteString(env->isolate(), err_string))
+      .Check();
 
   if (message != nullptr) {
-    obj->Set(env->context(), env->message_string(),
-             OneByteString(env->isolate(), message)).Check();
+    obj->Set(env->context(),
+             env->message_string(),
+             OneByteString(env->isolate(), message))
+        .Check();
   }
 
   Local<Value> path_buffer;
   if (path != nullptr) {
     path_buffer =
-      Buffer::Copy(env->isolate(), path, strlen(path)).ToLocalChecked();
+        Buffer::Copy(env->isolate(), path, strlen(path)).ToLocalChecked();
     obj->Set(env->context(), env->path_string(), path_buffer).Check();
   }
 
   Local<Value> dest_buffer;
   if (dest != nullptr) {
     dest_buffer =
-      Buffer::Copy(env->isolate(), dest, strlen(dest)).ToLocalChecked();
+        Buffer::Copy(env->isolate(), dest, strlen(dest)).ToLocalChecked();
     obj->Set(env->context(), env->dest_string(), dest_buffer).Check();
   }
 
   if (syscall != nullptr) {
-    obj->Set(env->context(), env->syscall_string(),
-             OneByteString(env->isolate(), syscall)).Check();
+    obj->Set(env->context(),
+             env->syscall_string(),
+             OneByteString(env->isolate(), syscall))
+        .Check();
   }
 }
 
@@ -875,8 +870,7 @@ void Environment::CollectUVExceptionInfo(Local<Value> object,
                                          const char* message,
                                          const char* path,
                                          const char* dest) {
-  if (!object->IsObject() || errorno == 0)
-    return;
+  if (!object->IsObject() || errorno == 0) return;
 
   Local<Object> obj = object.As<Object>();
   const char* err_string = uv_err_name(errorno);
@@ -885,8 +879,8 @@ void Environment::CollectUVExceptionInfo(Local<Value> object,
     message = uv_strerror(errorno);
   }
 
-  node::CollectExceptionInfo(this, obj, errorno, err_string,
-                             syscall, message, path, dest);
+  node::CollectExceptionInfo(
+      this, obj, errorno, err_string, syscall, message, path, dest);
 }
 
 void ImmediateInfo::MemoryInfo(MemoryTracker* tracker) const {
@@ -907,10 +901,12 @@ void AsyncHooks::MemoryInfo(MemoryTracker* tracker) const {
 void AsyncHooks::grow_async_ids_stack() {
   async_ids_stack_.reserve(async_ids_stack_.Length() * 3);
 
-  env()->async_hooks_binding()->Set(
-      env()->context(),
-      env()->async_ids_stack_string(),
-      async_ids_stack_.GetJSArray()).Check();
+  env()
+      ->async_hooks_binding()
+      ->Set(env()->context(),
+            env()->async_ids_stack_string(),
+            async_ids_stack_.GetJSArray())
+      .Check();
 }
 
 uv_key_t Environment::thread_local_env = {};
@@ -1030,8 +1026,7 @@ char* Environment::Reallocate(char* data, size_t old_size, size_t size) {
   char* new_data = AllocateUnchecked(size);
   if (new_data == nullptr) return nullptr;
   memcpy(new_data, data, std::min(size, old_size));
-  if (size > old_size)
-    memset(new_data + old_size, 0, size - old_size);
+  if (size > old_size) memset(new_data + old_size, 0, size - old_size);
   Free(data, old_size);
   return new_data;
 }
@@ -1043,12 +1038,35 @@ void Environment::AddArrayBufferAllocatorToKeepAliveUntilIsolateDispose(
     CHECK_NOT_NULL(platform);
 
     keep_alive_allocators_ = new ArrayBufferAllocatorList();
-    platform->AddIsolateFinishedCallback(isolate(), [](void* data) {
-      delete static_cast<ArrayBufferAllocatorList*>(data);
-    }, static_cast<void*>(keep_alive_allocators_));
+    platform->AddIsolateFinishedCallback(
+        isolate(),
+        [](void* data) { delete static_cast<ArrayBufferAllocatorList*>(data); },
+        static_cast<void*>(keep_alive_allocators_));
   }
 
   keep_alive_allocators_->insert(allocator);
+}
+
+static std::function<void(const Environment*)> scope_enter_func;
+static std::function<void(const Environment*)> scope_exit_func;
+
+void Environment::EnterScope() const {
+  if (scope_enter_func) {
+    scope_enter_func(this);
+  }
+}
+
+void Environment::ExitScope() const {
+  if (scope_exit_func) {
+    scope_exit_func(this);
+  }
+}
+
+void Environment::SetScopeHandler(
+    const std::function<void(const Environment*)>& enter,
+    const std::function<void(const Environment*)>& exit) {
+  scope_enter_func = enter;
+  scope_exit_func = exit;
 }
 
 void AsyncRequest::Install(Environment* env, void* data, uv_async_cb target) {
@@ -1089,7 +1107,9 @@ void BaseObject::DeleteMe(void* data) {
   delete self;
 }
 
-bool BaseObject::IsDoneInitializing() const { return true; }
+bool BaseObject::IsDoneInitializing() const {
+  return true;
+}
 
 Local<Object> BaseObject::WrappedObject() const {
   return object();

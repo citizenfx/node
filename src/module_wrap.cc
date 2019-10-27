@@ -1284,6 +1284,7 @@ static MaybeLocal<Promise> ImportModuleDynamically(
   Isolate* iso = context->GetIsolate();
   Environment* env = Environment::GetCurrent(context);
   CHECK_NOT_NULL(env);  // TODO(addaleax): Handle nullptr here.
+  EnvironmentScope env_scope(env);
   v8::EscapableHandleScope handle_scope(iso);
 
   Local<Function> import_callback =
@@ -1347,6 +1348,7 @@ void ModuleWrap::SetImportModuleDynamicallyCallback(
     const FunctionCallbackInfo<Value>& args) {
   Isolate* iso = args.GetIsolate();
   Environment* env = Environment::GetCurrent(args);
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(iso);
 
   CHECK_EQ(args.Length(), 1);

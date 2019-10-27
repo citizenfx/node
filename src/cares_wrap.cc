@@ -367,6 +367,7 @@ void ares_sockstate_cb(void* data,
 Local<Array> HostentToNames(Environment* env,
                             struct hostent* host,
                             Local<Array> append_to = Local<Array>()) {
+  EnvironmentScope env_scope(env);
   EscapableHandleScope scope(env->isolate());
   auto context = env->context();
   bool append = !append_to.IsEmpty();
@@ -700,6 +701,7 @@ class QueryWrap : public AsyncWrap {
 
   void CallOnComplete(Local<Value> answer,
                       Local<Value> extra = Local<Value>()) {
+    EnvironmentScope env_scope(env());
     HandleScope handle_scope(env()->isolate());
     Context::Scope context_scope(env()->context());
     Local<Value> argv[] = {
@@ -716,6 +718,7 @@ class QueryWrap : public AsyncWrap {
 
   void ParseError(int status) {
     CHECK_NE(status, ARES_SUCCESS);
+    EnvironmentScope env_scope(env());
     HandleScope handle_scope(env()->isolate());
     Context::Scope context_scope(env()->context());
     const char* code = ToErrorCodeString(status);
@@ -751,6 +754,7 @@ Local<Array> AddrTTLToArray(Environment* env,
                             const T* addrttls,
                             size_t naddrttls) {
   auto isolate = env->isolate();
+  EnvironmentScope env_scope(env);
   EscapableHandleScope escapable_handle_scope(isolate);
   auto context = env->context();
 
@@ -771,6 +775,7 @@ int ParseGeneralReply(Environment* env,
                       Local<Array> ret,
                       void* addrttls = nullptr,
                       int* naddrttls = nullptr) {
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   auto context = env->context();
   hostent* host;
@@ -854,6 +859,7 @@ int ParseMxReply(Environment* env,
                  int len,
                  Local<Array> ret,
                  bool need_type = false) {
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   auto context = env->context();
 
@@ -890,6 +896,7 @@ int ParseTxtReply(Environment* env,
                   int len,
                   Local<Array> ret,
                   bool need_type = false) {
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   auto context = env->context();
 
@@ -954,6 +961,7 @@ int ParseSrvReply(Environment* env,
                   int len,
                   Local<Array> ret,
                   bool need_type = false) {
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   auto context = env->context();
 
@@ -997,6 +1005,7 @@ int ParseNaptrReply(Environment* env,
                     int len,
                     Local<Array> ret,
                     bool need_type = false) {
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   auto context = env->context();
 
@@ -1050,6 +1059,7 @@ int ParseSoaReply(Environment* env,
                   unsigned char* buf,
                   int len,
                   Local<Object>* ret) {
+  EnvironmentScope env_scope(env);
   EscapableHandleScope handle_scope(env->isolate());
   auto context = env->context();
 
@@ -1185,6 +1195,7 @@ class QueryAnyWrap: public QueryWrap {
 
  protected:
   void Parse(unsigned char* buf, int len) override {
+    EnvironmentScope env_scope(env());
     HandleScope handle_scope(env()->isolate());
     auto context = env()->context();
     Context::Scope context_scope(context);
@@ -1367,6 +1378,7 @@ class QueryAWrap: public QueryWrap {
 
  protected:
   void Parse(unsigned char* buf, int len) override {
+    EnvironmentScope env_scope(env());
     HandleScope handle_scope(env()->isolate());
     Context::Scope context_scope(env()->context());
 
@@ -1413,6 +1425,7 @@ class QueryAaaaWrap: public QueryWrap {
 
  protected:
   void Parse(unsigned char* buf, int len) override {
+    EnvironmentScope env_scope(env());
     HandleScope handle_scope(env()->isolate());
     Context::Scope context_scope(env()->context());
 
@@ -1459,6 +1472,7 @@ class QueryCnameWrap: public QueryWrap {
 
  protected:
   void Parse(unsigned char* buf, int len) override {
+    EnvironmentScope env_scope(env());
     HandleScope handle_scope(env()->isolate());
     Context::Scope context_scope(env()->context());
 
@@ -1492,6 +1506,7 @@ class QueryMxWrap: public QueryWrap {
 
  protected:
   void Parse(unsigned char* buf, int len) override {
+    EnvironmentScope env_scope(env());
     HandleScope handle_scope(env()->isolate());
     Context::Scope context_scope(env()->context());
 
@@ -1525,6 +1540,7 @@ class QueryNsWrap: public QueryWrap {
 
  protected:
   void Parse(unsigned char* buf, int len) override {
+    EnvironmentScope env_scope(env());
     HandleScope handle_scope(env()->isolate());
     Context::Scope context_scope(env()->context());
 
@@ -1558,6 +1574,7 @@ class QueryTxtWrap: public QueryWrap {
 
  protected:
   void Parse(unsigned char* buf, int len) override {
+    EnvironmentScope env_scope(env());
     HandleScope handle_scope(env()->isolate());
     Context::Scope context_scope(env()->context());
 
@@ -1590,6 +1607,7 @@ class QuerySrvWrap: public QueryWrap {
 
  protected:
   void Parse(unsigned char* buf, int len) override {
+    EnvironmentScope env_scope(env());
     HandleScope handle_scope(env()->isolate());
     Context::Scope context_scope(env()->context());
 
@@ -1621,6 +1639,7 @@ class QueryPtrWrap: public QueryWrap {
 
  protected:
   void Parse(unsigned char* buf, int len) override {
+    EnvironmentScope env_scope(env());
     HandleScope handle_scope(env()->isolate());
     Context::Scope context_scope(env()->context());
 
@@ -1654,6 +1673,7 @@ class QueryNaptrWrap: public QueryWrap {
 
  protected:
   void Parse(unsigned char* buf, int len) override {
+    EnvironmentScope env_scope(env());
     HandleScope handle_scope(env()->isolate());
     Context::Scope context_scope(env()->context());
 
@@ -1686,6 +1706,7 @@ class QuerySoaWrap: public QueryWrap {
 
  protected:
   void Parse(unsigned char* buf, int len) override {
+    EnvironmentScope env_scope(env());
     HandleScope handle_scope(env()->isolate());
     auto context = env()->context();
     Context::Scope context_scope(context);
@@ -1774,6 +1795,7 @@ class GetHostByAddrWrap: public QueryWrap {
 
  protected:
   void Parse(struct hostent* host) override {
+    EnvironmentScope env_scope(env());
     HandleScope handle_scope(env()->isolate());
     Context::Scope context_scope(env()->context());
     this->CallOnComplete(HostentToNames(env(), host));
@@ -1814,6 +1836,7 @@ void AfterGetAddrInfo(uv_getaddrinfo_t* req, int status, struct addrinfo* res) {
       static_cast<GetAddrInfoReqWrap*>(req->data)};
   Environment* env = req_wrap->env();
 
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 
@@ -1884,6 +1907,7 @@ void AfterGetNameInfo(uv_getnameinfo_t* req,
       static_cast<GetNameInfoReqWrap*>(req->data)};
   Environment* env = req_wrap->env();
 
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 

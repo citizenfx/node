@@ -411,7 +411,8 @@ MaybeLocal<Value> StartMainThreadExecution(Environment* env) {
   // To allow people to extend Node in different ways, this hook allows
   // one to drop a file lib/_third_party_main.js into the build
   // directory which will be executed instead of Node's normal loading.
-  if (NativeModuleEnv::Exists("_third_party_main")) {
+  if (NativeModuleEnv::Exists("_third_party_main") &&
+      !env->options()->citizen_alt_mode) {
     return StartExecution(env, "internal/main/run_third_party_main");
   }
 
@@ -975,6 +976,13 @@ InitializationResult InitializeOncePerProcess(int argc, char** argv) {
 #endif  // HAVE_OPENSSL
 
   InitializeV8Platform(per_process::cli_options->v8_thread_pool_size);
+
+  char exePath[1024];
+  size_t exePathSize = sizeof(exePath);
+
+  uv_exepath(exePath, &exePathSize);
+  V8::InitializeICUDefaultLocation(exePath);
+
   V8::Initialize();
   performance::performance_v8_start = PERFORMANCE_NOW();
   per_process::v8_initialized = true;

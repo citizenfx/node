@@ -197,12 +197,15 @@ MaybeLocal<Function> NativeModuleLoader::LookupAndCompile(
 
   Mutex::ScopedLock lock(code_cache_mutex_);
 
+  // debug builds do not like CRT mismatches as it tries to _free_dbg a release CRT allocated chunk
   ScriptCompiler::CachedData* cached_data = nullptr;
   {
     auto cache_it = code_cache_.find(id);
     if (cache_it != code_cache_.end()) {
       // Transfer ownership to ScriptCompiler::Source later.
+#ifndef _DEBUG
       cached_data = cache_it->second.release();
+#endif
       code_cache_.erase(cache_it);
     }
   }
@@ -240,6 +243,8 @@ MaybeLocal<Function> NativeModuleLoader::LookupAndCompile(
   *result = (has_cache && !script_source.GetCachedData()->rejected)
                 ? Result::kWithCache
                 : Result::kWithoutCache;
+
+#ifndef _DEBUG
   // Generate new cache for next compilation
   std::unique_ptr<ScriptCompiler::CachedData> new_cached_data(
       ScriptCompiler::CreateCodeCacheForFunction(fun));
@@ -247,6 +252,7 @@ MaybeLocal<Function> NativeModuleLoader::LookupAndCompile(
 
   // The old entry should've been erased by now so we can just emplace
   code_cache_.emplace(id, std::move(new_cached_data));
+#endif
 
   return scope.Escape(fun);
 }

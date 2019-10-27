@@ -337,6 +337,7 @@ void TCPWrap::Connect(const FunctionCallbackInfo<Value>& args,
 Local<Object> AddressToJS(Environment* env,
                           const sockaddr* addr,
                           Local<Object> info) {
+  EnvironmentScope env_scope(env);
   EscapableHandleScope scope(env->isolate());
   char ip[INET6_ADDRSTRLEN];
   const sockaddr_in* a4;

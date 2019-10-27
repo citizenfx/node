@@ -504,6 +504,11 @@ EnvironmentOptionsParser::EnvironmentOptionsParser() {
             &EnvironmentOptions::unhandled_rejections,
             kAllowedInEnvironment);
 
+  // CFX
+  AddOption("--start-node",
+            "enable CitizenFX alt mode",
+            &EnvironmentOptions::citizen_alt_mode);
+
   AddOption("--check",
             "syntax check script without executing",
             &EnvironmentOptions::syntax_check_only);

@@ -296,6 +296,7 @@ class ProcessWrap : public HandleWrap {
     CHECK_EQ(&wrap->process_, handle);
 
     Environment* env = wrap->env();
+    EnvironmentScope env_scope(env);
     HandleScope handle_scope(env->isolate());
     Context::Scope context_scope(env->context());
 

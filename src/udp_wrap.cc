@@ -537,6 +537,7 @@ void UDPWrap::OnSend(uv_udp_send_t* req, int status) {
   std::unique_ptr<SendWrap> req_wrap{static_cast<SendWrap*>(req->data)};
   if (req_wrap->have_callback()) {
     Environment* env = req_wrap->env();
+    EnvironmentScope env_scope(env);
     HandleScope handle_scope(env->isolate());
     Context::Scope context_scope(env->context());
     Local<Value> arg[] = {
@@ -568,6 +569,7 @@ void UDPWrap::OnRecv(uv_udp_t* handle,
     return;
   }
 
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 

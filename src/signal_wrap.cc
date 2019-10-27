@@ -106,6 +106,7 @@ class SignalWrap : public HandleWrap {
         [](uv_signal_t* handle, int signum) {
           SignalWrap* wrap = ContainerOf(&SignalWrap::handle_, handle);
           Environment* env = wrap->env();
+          EnvironmentScope env_scope(env);
           HandleScope handle_scope(env->isolate());
           Context::Scope context_scope(env->context());
           Local<Value> arg = Integer::New(env->isolate(), signum);

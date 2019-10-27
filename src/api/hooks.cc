@@ -30,6 +30,7 @@ void AtExit(Environment* env, void (*cb)(void* arg), void* arg) {
 }
 
 void EmitBeforeExit(Environment* env) {
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
   Local<Value> exit_code = env->process_object()
@@ -42,6 +43,7 @@ void EmitBeforeExit(Environment* env) {
 
 int EmitExit(Environment* env) {
   // process.emit('exit')
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
   Local<Object> process_object = env->process_object();

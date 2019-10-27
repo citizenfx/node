@@ -163,6 +163,9 @@ class EnvironmentOptions : public Options {
   bool tls_max_v1_2 = false;
   bool tls_max_v1_3 = false;
 
+  // CFX
+  bool citizen_alt_mode = false;
+
   std::vector<std::string> preload_modules;
 
   std::vector<std::string> user_argv;

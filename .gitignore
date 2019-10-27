@@ -132,3 +132,5 @@ _UpgradeReport_Files/
 __pycache__
 .DS_Store
 *~
+
+src/node_javascript.cc

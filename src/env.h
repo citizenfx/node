@@ -56,7 +56,7 @@ namespace node {
 namespace contextify {
 class ContextifyScript;
 class CompiledFnEntry;
-}
+}  // namespace contextify
 
 namespace fs {
 class FileHandleReadWrap;
@@ -146,22 +146,22 @@ constexpr size_t kFsStatsBufferLength =
 // Private symbols are per-isolate primitives but Environment proxies them
 // for the sake of convenience.  Strings should be ASCII-only and have a
 // "node:" prefix to avoid name clashes with third-party code.
-#define PER_ISOLATE_PRIVATE_SYMBOL_PROPERTIES(V)                              \
-  V(alpn_buffer_private_symbol, "node:alpnBuffer")                            \
-  V(arrow_message_private_symbol, "node:arrowMessage")                        \
-  V(contextify_context_private_symbol, "node:contextify:context")             \
-  V(contextify_global_private_symbol, "node:contextify:global")               \
-  V(decorated_private_symbol, "node:decorated")                               \
-  V(napi_wrapper, "node:napi:wrapper")                                        \
-  V(sab_lifetimepartner_symbol, "node:sharedArrayBufferLifetimePartner")      \
+#define PER_ISOLATE_PRIVATE_SYMBOL_PROPERTIES(V)                               \
+  V(alpn_buffer_private_symbol, "node:alpnBuffer")                             \
+  V(arrow_message_private_symbol, "node:arrowMessage")                         \
+  V(contextify_context_private_symbol, "node:contextify:context")              \
+  V(contextify_global_private_symbol, "node:contextify:global")                \
+  V(decorated_private_symbol, "node:decorated")                                \
+  V(napi_wrapper, "node:napi:wrapper")                                         \
+  V(sab_lifetimepartner_symbol, "node:sharedArrayBufferLifetimePartner")
 
 // Symbols are per-isolate primitives but Environment proxies them
 // for the sake of convenience.
-#define PER_ISOLATE_SYMBOL_PROPERTIES(V)                                      \
-  V(handle_onclose_symbol, "handle_onclose")                                  \
-  V(no_message_symbol, "no_message_symbol")                                   \
-  V(oninit_symbol, "oninit")                                                  \
-  V(owner_symbol, "owner")                                                    \
+#define PER_ISOLATE_SYMBOL_PROPERTIES(V)                                       \
+  V(handle_onclose_symbol, "handle_onclose")                                   \
+  V(no_message_symbol, "no_message_symbol")                                    \
+  V(oninit_symbol, "oninit")                                                   \
+  V(owner_symbol, "owner")
 
 // Strings are per-isolate primitives but Environment proxies them
 // for the sake of convenience.  Strings should be ASCII-only.
@@ -480,7 +480,7 @@ class IsolateData : public MemoryRetainer {
 #define VP(PropertyName, StringValue) V(v8::Private, PropertyName)
 #define VY(PropertyName, StringValue) V(v8::Symbol, PropertyName)
 #define VS(PropertyName, StringValue) V(v8::String, PropertyName)
-#define V(TypeName, PropertyName)                                             \
+#define V(TypeName, PropertyName)                                              \
   inline v8::Local<TypeName> PropertyName(v8::Isolate* isolate) const;
   PER_ISOLATE_PRIVATE_SYMBOL_PROPERTIES(VP)
   PER_ISOLATE_SYMBOL_PROPERTIES(VY)
@@ -504,8 +504,7 @@ class IsolateData : public MemoryRetainer {
 #define VP(PropertyName, StringValue) V(v8::Private, PropertyName)
 #define VY(PropertyName, StringValue) V(v8::Symbol, PropertyName)
 #define VS(PropertyName, StringValue) V(v8::String, PropertyName)
-#define V(TypeName, PropertyName)                                             \
-  v8::Eternal<TypeName> PropertyName ## _;
+#define V(TypeName, PropertyName) v8::Eternal<TypeName> PropertyName##_;
   PER_ISOLATE_PRIVATE_SYMBOL_PROPERTIES(VP)
   PER_ISOLATE_SYMBOL_PROPERTIES(VY)
   PER_ISOLATE_STRING_PROPERTIES(VS)
@@ -541,7 +540,7 @@ enum class DebugCategory {
 #define V(name) name,
   DEBUG_CATEGORY_NAMES(V)
 #undef V
-  CATEGORY_COUNT
+      CATEGORY_COUNT
 };
 
 // A unique-pointer-ish object that is compatible with the JS engine's
@@ -594,14 +593,13 @@ class AsyncRequest : public MemoryRetainer {
   uv_async_t* GetHandle();
   void MemoryInfo(MemoryTracker* tracker) const override;
 
-
   SET_MEMORY_INFO_NAME(AsyncRequest)
   SET_SELF_SIZE(AsyncRequest)
 
  private:
   Environment* env_;
   uv_async_t* async_ = nullptr;
-  std::atomic_bool stopped_ {true};
+  std::atomic_bool stopped_{true};
 };
 
 class KVStore {
@@ -788,18 +786,14 @@ class TickInfo : public MemoryRetainer {
   AliasedUint8Array fields_;
 };
 
-class TrackingTraceStateObserver :
-    public v8::TracingController::TraceStateObserver {
+class TrackingTraceStateObserver
+    : public v8::TracingController::TraceStateObserver {
  public:
   explicit TrackingTraceStateObserver(Environment* env) : env_(env) {}
 
-  void OnTraceEnabled() override {
-    UpdateTraceCategoryState();
-  }
+  void OnTraceEnabled() override { UpdateTraceCategoryState(); }
 
-  void OnTraceDisabled() override {
-    UpdateTraceCategoryState();
-  }
+  void OnTraceDisabled() override { UpdateTraceCategoryState(); }
 
  private:
   void UpdateTraceCategoryState();
@@ -904,6 +898,10 @@ class Environment : public MemoryRetainer {
   static uv_key_t thread_local_env;
   static inline Environment* GetThreadLocalEnv();
 
+  static void SetScopeHandler(
+      const std::function<void(const Environment*)>& enter,
+      const std::function<void(const Environment*)>& exit);
+
   Environment(IsolateData* isolate_data,
               v8::Local<v8::Context> context,
               const std::vector<std::string>& args,
@@ -930,6 +928,9 @@ class Environment : public MemoryRetainer {
   void CleanupHandles();
   void Exit(int code);
   void ExitEnv();
+
+  void EnterScope() const;
+  void ExitScope() const;
 
   // Register clean-up cb to be called on environment destruction.
   inline void RegisterHandleCleanup(uv_handle_t* handle,
@@ -1012,8 +1013,7 @@ class Environment : public MemoryRetainer {
 
   std::unordered_multimap<int, loader::ModuleWrap*> hash_to_module_map;
   std::unordered_map<uint32_t, loader::ModuleWrap*> id_to_module_map;
-  std::unordered_map<uint32_t, contextify::ContextifyScript*>
-      id_to_script_map;
+  std::unordered_map<uint32_t, contextify::ContextifyScript*> id_to_script_map;
   std::unordered_map<uint32_t, contextify::CompiledFnEntry*> id_to_function_map;
 
   inline uint32_t get_next_module_id();
@@ -1048,7 +1048,7 @@ class Environment : public MemoryRetainer {
   inline AliasedBigUint64Array* fs_stats_field_bigint_array();
 
   inline std::vector<std::unique_ptr<fs::FileHandleReadWrap>>&
-      file_handle_read_wrap_freelist();
+  file_handle_read_wrap_freelist();
 
   inline performance::performance_state* performance_state();
   inline std::unordered_map<std::string, uint64_t>* performance_marks();
@@ -1099,14 +1099,11 @@ class Environment : public MemoryRetainer {
                                const char* path = nullptr,
                                const char* dest = nullptr);
 
-  inline v8::Local<v8::FunctionTemplate>
-      NewFunctionTemplate(v8::FunctionCallback callback,
-                          v8::Local<v8::Signature> signature =
-                              v8::Local<v8::Signature>(),
-                          v8::ConstructorBehavior behavior =
-                              v8::ConstructorBehavior::kAllow,
-                          v8::SideEffectType side_effect =
-                              v8::SideEffectType::kHasSideEffect);
+  inline v8::Local<v8::FunctionTemplate> NewFunctionTemplate(
+      v8::FunctionCallback callback,
+      v8::Local<v8::Signature> signature = v8::Local<v8::Signature>(),
+      v8::ConstructorBehavior behavior = v8::ConstructorBehavior::kAllow,
+      v8::SideEffectType side_effect = v8::SideEffectType::kHasSideEffect);
 
   // Convenience methods for NewFunctionTemplate().
   inline void SetMethod(v8::Local<v8::Object> that,
@@ -1135,7 +1132,7 @@ class Environment : public MemoryRetainer {
 #define VP(PropertyName, StringValue) V(v8::Private, PropertyName)
 #define VY(PropertyName, StringValue) V(v8::Symbol, PropertyName)
 #define VS(PropertyName, StringValue) V(v8::String, PropertyName)
-#define V(TypeName, PropertyName)                                             \
+#define V(TypeName, PropertyName)                                              \
   inline v8::Local<TypeName> PropertyName() const;
   PER_ISOLATE_PRIVATE_SYMBOL_PROPERTIES(VP)
   PER_ISOLATE_SYMBOL_PROPERTIES(VY)
@@ -1145,9 +1142,9 @@ class Environment : public MemoryRetainer {
 #undef VY
 #undef VP
 
-#define V(PropertyName, TypeName)                                             \
-  inline v8::Local<TypeName> PropertyName() const;                            \
-  inline void set_ ## PropertyName(v8::Local<TypeName> value);
+#define V(PropertyName, TypeName)                                              \
+  inline v8::Local<TypeName> PropertyName() const;                             \
+  inline void set_##PropertyName(v8::Local<TypeName> value);
   ENVIRONMENT_STRONG_PERSISTENT_VALUES(V)
   ENVIRONMENT_STRONG_PERSISTENT_TEMPLATES(V)
 #undef V
@@ -1184,13 +1181,11 @@ class Environment : public MemoryRetainer {
   // cb will be called as cb(env) on the next event loop iteration.
   // keep_alive will be kept alive between now and after the callback has run.
   template <typename Fn>
-  inline void SetImmediate(Fn&& cb,
-                           v8::Local<v8::Object> keep_alive =
-                               v8::Local<v8::Object>());
+  inline void SetImmediate(
+      Fn&& cb, v8::Local<v8::Object> keep_alive = v8::Local<v8::Object>());
   template <typename Fn>
-  inline void SetUnrefImmediate(Fn&& cb,
-                                v8::Local<v8::Object> keep_alive =
-                                    v8::Local<v8::Object>());
+  inline void SetUnrefImmediate(
+      Fn&& cb, v8::Local<v8::Object> keep_alive = v8::Local<v8::Object>());
   // This needs to be available for the JS-land setImmediate().
   void ToggleImmediateRef(bool ref);
 
@@ -1423,7 +1418,8 @@ class Environment : public MemoryRetainer {
   // Use an unordered_set, so that we have efficient insertion and removal.
   std::unordered_set<CleanupHookCallback,
                      CleanupHookCallback::Hash,
-                     CleanupHookCallback::Equal> cleanup_hooks_;
+                     CleanupHookCallback::Equal>
+      cleanup_hooks_;
   uint64_t cleanup_hook_counter_ = 0;
   bool started_cleanup_ = false;
 
@@ -1438,12 +1434,22 @@ class Environment : public MemoryRetainer {
   template <typename T>
   void ForEachBaseObject(T&& iterator);
 
-#define V(PropertyName, TypeName) v8::Global<TypeName> PropertyName ## _;
+#define V(PropertyName, TypeName) v8::Global<TypeName> PropertyName##_;
   ENVIRONMENT_STRONG_PERSISTENT_VALUES(V)
   ENVIRONMENT_STRONG_PERSISTENT_TEMPLATES(V)
 #undef V
 
   v8::Global<v8::Context> context_;
+};
+
+class EnvironmentScope {
+ public:
+  inline EnvironmentScope(const Environment* env) : env_(env) { env->EnterScope(); }
+
+  inline ~EnvironmentScope() { env_->ExitScope(); }
+
+ private:
+  const Environment* env_;
 };
 
 }  // namespace node

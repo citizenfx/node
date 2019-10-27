@@ -43,6 +43,7 @@ bool SafeGetenv(const char* key, std::string* text, Environment* env) {
 #endif
 
   if (env != nullptr) {
+    EnvironmentScope env_scope(env);
     HandleScope handle_scope(env->isolate());
     TryCatch ignore_errors(env->isolate());
     MaybeLocal<String> value = env->env_vars()->Get(

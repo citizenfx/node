@@ -2124,6 +2124,7 @@ static void Parse(Environment* env,
                   Local<Value> error_cb) {
   Isolate* isolate = env->isolate();
   Local<Context> context = env->context();
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(isolate);
   Context::Scope context_scope(context);
 

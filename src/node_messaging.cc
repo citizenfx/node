@@ -100,6 +100,7 @@ MaybeLocal<Value> Message::Deserialize(Environment* env,
                                        Local<Context> context) {
   CHECK(!IsCloseMessage());
 
+  EnvironmentScope env_scope(env);
   EscapableHandleScope handle_scope(env->isolate());
   Context::Scope context_scope(context);
 
@@ -307,6 +308,7 @@ Maybe<bool> Message::Serialize(Environment* env,
                                Local<Value> input,
                                const TransferList& transfer_list_v,
                                Local<Object> source_port) {
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(context);
 
@@ -601,6 +603,7 @@ MaybeLocal<Value> MessagePort::ReceiveMessage(Local<Context> context,
 
 void MessagePort::OnMessage() {
   Debug(this, "Running MessagePort::OnMessage()");
+  EnvironmentScope env_scope(env());
   HandleScope handle_scope(env()->isolate());
   Local<Context> context = object(env()->isolate())->CreationContext();
 
@@ -628,6 +631,7 @@ void MessagePort::OnMessage() {
       return;
     }
 
+    EnvironmentScope env_scope(env());
     HandleScope handle_scope(env()->isolate());
     Context::Scope context_scope(context);
 

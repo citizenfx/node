@@ -22,6 +22,8 @@
 #ifndef SRC_NODE_H_
 #define SRC_NODE_H_
 
+#include <functional>
+
 #ifdef _WIN32
 # ifndef BUILDING_NODE_EXTENSION
 #  define NODE_EXTERN __declspec(dllexport)
@@ -327,6 +329,12 @@ NODE_EXTERN Environment* CreateEnvironment(IsolateData* isolate_data,
 NODE_EXTERN void LoadEnvironment(Environment* env);
 NODE_EXTERN void FreeEnvironment(Environment* env);
 
+NODE_EXTERN void SetScopeHandler(
+    const std::function<void(const Environment*)>& enter,
+    const std::function<void(const Environment*)>& exit);
+
+NODE_EXTERN v8::Isolate* GetIsolate(const Environment* env);
+
 // This may return nullptr if context is not associated with a Node instance.
 NODE_EXTERN Environment* GetCurrentEnvironment(v8::Local<v8::Context> context);
 
@@ -338,7 +346,8 @@ NODE_EXTERN MultiIsolatePlatform* GetMainThreadMultiIsolatePlatform();
 NODE_EXTERN MultiIsolatePlatform* CreatePlatform(
     int thread_pool_size,
     node::tracing::TracingController* tracing_controller);
-MultiIsolatePlatform* InitializeV8Platform(int thread_pool_size);
+// CFX
+NODE_EXTERN MultiIsolatePlatform* InitializeV8Platform(int thread_pool_size);
 NODE_EXTERN void FreePlatform(MultiIsolatePlatform* platform);
 
 NODE_EXTERN void EmitBeforeExit(Environment* env);
