@@ -40,7 +40,7 @@
 
 # === Rules for artifacts of `./configure` ===
 /icu_config.gypi
-/config.gypi
+#/config.gypi
 /config.status
 /config_fips.gypi
 
