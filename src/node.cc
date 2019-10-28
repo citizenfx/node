@@ -914,7 +914,10 @@ void Init(int* argc,
     argv[i] = strdup(argv_[i].c_str());
 }
 
-InitializationResult InitializeOncePerProcess(int argc, char** argv) {
+InitializationResult InitializeOncePerProcess(int argc,
+                                              char** argv,
+                                              int exec_argc,
+                                              char** exec_argv) {
   atexit(ResetStdio);
   PlatformInit();
 
@@ -933,6 +936,7 @@ InitializationResult InitializeOncePerProcess(int argc, char** argv) {
 
   InitializationResult result;
   result.args = std::vector<std::string>(argv, argv + argc);
+  result.exec_args = std::vector<std::string>(exec_argv, exec_argv + exec_argc);
   std::vector<std::string> errors;
 
   // This needs to run *before* V8::Initialize().
@@ -1002,8 +1006,9 @@ void TearDownOncePerProcess() {
   per_process::v8_platform.Dispose();
 }
 
-int Start(int argc, char** argv) {
-  InitializationResult result = InitializeOncePerProcess(argc, argv);
+int Start(int argc, char** argv, int exec_argc, char** exec_argv) {
+  InitializationResult result =
+      InitializeOncePerProcess(argc, argv, exec_argc, exec_argv);
   if (result.early_return) {
     return result.exit_code;
   }

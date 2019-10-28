@@ -208,7 +208,10 @@ class Environment;
 
 // TODO(addaleax): Officially deprecate this and replace it with something
 // better suited for a public embedder API.
-NODE_EXTERN int Start(int argc, char* argv[]);
+NODE_EXTERN int Start(int argc,
+                      char* argv[],
+                      int exec_argc,
+                      char* exec_argv[]);
 
 // Tear down Node.js while it is running (there are active handles
 // in the loop and / or actively executing JavaScript code).
