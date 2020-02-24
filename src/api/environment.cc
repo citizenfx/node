@@ -8,6 +8,10 @@
 #include "uv.h"
 
 namespace node {
+namespace inspector {
+extern bool IsAgentIOThreadInitialized();
+}
+
 using errors::TryCatchScope;
 using v8::Array;
 using v8::Context;
@@ -277,7 +281,7 @@ Environment* CreateEnvironment(IsolateData* isolate_data,
       exec_args,
       static_cast<Environment::Flags>(Environment::kIsMainThread |
                                       Environment::kOwnsProcessState |
-                                      Environment::kOwnsInspector));
+                                      ((!inspector::IsAgentIOThreadInitialized()) ? Environment::kOwnsInspector : 0)));
   env->InitializeLibuv(per_process::v8_is_profiling);
 
 #if HAVE_INSPECTOR && NODE_USE_V8_PLATFORM
