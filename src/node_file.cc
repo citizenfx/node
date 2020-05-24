@@ -205,7 +205,6 @@ inline void FileHandle::Close() {
 
 void FileHandle::CloseReq::Resolve() {
   Isolate* isolate = env()->isolate();
-  EnvironmentScope env_scope(env());
   HandleScope scope(isolate);
   InternalCallbackScope callback_scope(this);
   Local<Promise> promise = promise_.Get(isolate);
@@ -215,7 +214,6 @@ void FileHandle::CloseReq::Resolve() {
 
 void FileHandle::CloseReq::Reject(Local<Value> reason) {
   Isolate* isolate = env()->isolate();
-  EnvironmentScope env_scope(env());
   HandleScope scope(isolate);
   InternalCallbackScope callback_scope(this);
   Local<Promise> promise = promise_.Get(isolate);
@@ -225,7 +223,6 @@ void FileHandle::CloseReq::Reject(Local<Value> reason) {
 
 FileHandle* FileHandle::CloseReq::file_handle() {
   Isolate* isolate = env()->isolate();
-  EnvironmentScope env_scope(env());
   HandleScope scope(isolate);
   Local<Value> val = ref_.Get(isolate);
   Local<Object> obj = val.As<Object>();
@@ -260,8 +257,13 @@ inline MaybeLocal<Promise> FileHandle::ClosePromise() {
     auto AfterClose = uv_fs_callback_t{[](uv_fs_t* req) {
       std::unique_ptr<CloseReq> close(CloseReq::from_req(req));
       CHECK_NOT_NULL(close);
-      close->file_handle()->AfterClose();
       Isolate* isolate = close->env()->isolate();
+      EnvironmentScope env_scope(close->env());
+      v8::HandleScope handleScope(isolate);
+      Local<Context> context = close->env()->context();
+      v8::Context::Scope context_scope(context);
+
+      close->file_handle()->AfterClose();
       if (req->result < 0) {
         close->Reject(UVException(isolate, req->result, "close"));
       } else {
