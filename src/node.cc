@@ -981,11 +981,15 @@ InitializationResult InitializeOncePerProcess(int argc,
 
   InitializeV8Platform(per_process::cli_options->v8_thread_pool_size);
 
+  std::string cfxIcuPath;
+  credentials::SafeGetenv("CFX_ICU_PATH", &cfxIcuPath);
+
   char exePath[1024];
   size_t exePathSize = sizeof(exePath);
 
   uv_exepath(exePath, &exePathSize);
-  V8::InitializeICUDefaultLocation(exePath);
+  V8::InitializeICUDefaultLocation(
+      exePath, !cfxIcuPath.empty() ? cfxIcuPath.c_str() : nullptr);
 
   V8::Initialize();
   performance::performance_v8_start = PERFORMANCE_NOW();
