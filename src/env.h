@@ -1246,6 +1246,8 @@ class Environment : public MemoryRetainer {
   inline void set_heap_prof_interval(uint64_t interval);
   inline uint64_t heap_prof_interval() const;
 
+  inline bool is_monitor_mode() const { return is_monitor_mode_; }
+
 #endif  // HAVE_INSPECTOR
 
   // Only available if a MultiIsolatePlatform is in use.
@@ -1338,6 +1340,8 @@ class Environment : public MemoryRetainer {
   std::unique_ptr<inspector::Agent> inspector_agent_;
   bool is_in_inspector_console_call_ = false;
 #endif
+
+  bool is_monitor_mode_ = false;
 
   // handle_wrap_queue_ and req_wrap_queue_ needs to be at a fixed offset from
   // the start of the class because it is used by

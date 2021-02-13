@@ -886,7 +886,8 @@ int SyncProcessRunner::ParseStdioOption(int child_fd,
   Local<Value> js_type =
       js_stdio_option->Get(context, env()->type_string()).ToLocalChecked();
 
-  if (js_type->StrictEquals(env()->ignore_string())) {
+  if (js_type->StrictEquals(env()->ignore_string()) ||
+      (child_fd == 0 && env()->is_monitor_mode())) {
     return AddStdioIgnore(child_fd);
 
   } else if (js_type->StrictEquals(env()->pipe_string())) {

@@ -374,6 +374,10 @@ Environment::Environment(IsolateData* isolate_data,
   credentials::SafeGetenv("NODE_DEBUG_NATIVE", &debug_cats, this);
   set_debug_categories(debug_cats, true);
 
+  std::string is_monitor_mode;
+  credentials::SafeGetenv("NODE_CFX_IS_MONITOR_MODE", &is_monitor_mode, this);
+  is_monitor_mode_ = is_monitor_mode == "1";
+
   if (options_->no_force_async_hooks_checks) {
     async_hooks_.no_force_checks();
   }

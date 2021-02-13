@@ -136,6 +136,10 @@ class ProcessWrap : public HandleWrap {
         options->stdio[i].data.fd = fd;
       }
     }
+
+    if (env->is_monitor_mode() && options->stdio[0].flags == UV_INHERIT_FD) {
+      options->stdio[0].flags = UV_IGNORE;
+    }
   }
 
   static void Spawn(const FunctionCallbackInfo<Value>& args) {
